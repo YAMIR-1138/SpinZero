@@ -30,5 +30,5 @@ Based on beautiful mathematical insights by:
 ---
 
 **Disclaimer:**  
-The math is correct. The JavaScript might not be.  
+The math is correct. The code might not be.  
 Use at your own risk :)
