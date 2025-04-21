@@ -243,7 +243,7 @@
      svg line[stroke^="hsl"] { stroke: var(--vector); } /* Override HSL for now */
      .dark-mode svg line[stroke^="hsl"] { stroke: var(--dark-vector); }
 
-     /* Style the arrowhead */
+    /* Style the arrowhead */
     #arrowhead polygon { fill: var(--vector); }
     .dark-mode #arrowhead polygon { fill: var(--dark-vector); }
 
@@ -311,8 +311,11 @@
             <option value="elegant">Elegant</option>
             <option value="cursed">Cursed</option>
             <option value="random">Random</option>
+            <option value="heuristic">Heuristic Random</option>
+            <option value="cycle">Cycle Decomposition</option>
             <option value="manual">Manual</option>
           </select>
+          <small id="modeHelpText" style="display: none; color: var(--empty-slot); margin-top: 4px;">For n>24, only Cycle Decomposition, Heuristic Random, and Manual modes are available due to computational complexity.</small>
         </div>
         <div class="buttons">
           <button id="runBtn">Run</button>
@@ -334,14 +337,14 @@
     </div>
   </div>
   <footer>
-    Inspired by mathematical insights from <a href="https://www.kurims.kyoto-u.ac.jp/EMIS/journals/INTEGERS/papers/k31/k31.pdf" target="_blank">Gary Sivek</a> and the <a href="https://mattbaker.blog/2018/06/25/the-balanced-centrifuge-problem/" target="_blank">Matt Baker blog</a>.
+    Inspired by mathematical insights from <a href="https://www.kurims.kyoto-u.ac.jp/EMIS/journals/INTEGERS/papers/k31/k31.pdf" target="_blank" rel="noopener">Gary Sivek</a> and the <a href="https://mattbaker.blog/2018/06/25/the-balanced-centrifuge-problem/" target="_blank" rel="noopener">Matt Baker blog</a>.
     <br>Math is solid. Code may contain bugs. If your centrifuge goes flying, that's on me, not the roots of unity.
     <br>
     <span style="opacity:0.6;">Use responsibly — or your rotor may achieve low Earth orbit.</span>
     <br><br>
-    Made just for fun by Yam Amir, a member of the <a href="https://rnd.tasmc.org.il/laboratories/the-translational-genetics-and-genomics-research-laboratory-prof-hagit-baris-feldman/" target="_blank">TGGR lab</a>.
+    Made just for fun by Yam Amir, a member of the <a href="https://rnd.tasmc.org.il/laboratories/the-translational-genetics-and-genomics-research-laboratory-prof-hagit-baris-feldman/" target="_blank" rel="noopener">TGGR lab</a>.
     <br>
-    Code available on <a href="https://github.com/YAMIR-1138/SpinZero" target="_blank">GitHub</a>.
+    Code available on <a href="https://github.com/YAMIR-1138/SpinZero" target="_blank" rel="noopener">GitHub</a>.
   </footer>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -356,6 +359,32 @@
       const legend = document.getElementById('legend');
       let manualPos = new Set();
       const EPS = 1e-6;
+
+      // Function to update available modes based on n value
+      function updateAvailableModes() {
+        const n = +nInput.value;
+        const options = modeSel.options;
+        const helpText = document.getElementById('modeHelpText');
+        
+        // If n > 24, only allow Manual, Cycle and Heuristic Random modes
+        const isLargeN = n > 24;
+        
+        for (let i = 0; i < options.length; i++) {
+          const value = options[i].value;
+          if (value !== 'manual' && value !== 'heuristic' && value !== 'cycle') {
+            // Disable or enable based on n value
+            options[i].disabled = isLargeN;
+          }
+        }
+        
+        // Show/hide help text
+        helpText.style.display = isLargeN ? 'block' : 'none';
+        
+        // If current selection is disabled, switch to cycle
+        if (modeSel.options[modeSel.selectedIndex].disabled) {
+          modeSel.value = 'cycle';
+        }
+      }
 
       // Dark Mode Toggle Logic
       const toggleButton = document.getElementById('darkModeToggle');
@@ -549,6 +578,204 @@
         return worst || [];
       }
 
+      // Prime factorization function
+      function primeFactorization(n) {
+        const factors = [];
+        let divisor = 2;
+        
+        while (n > 1) {
+          while (n % divisor === 0) {
+            factors.push(divisor);
+            n /= divisor;
+          }
+          divisor++;
+          // Optimization: if divisor > sqrt(n), then n is prime
+          if (divisor * divisor > n && n > 1) {
+            factors.push(n);
+            break;
+          }
+        }
+        
+        return factors;
+      }
+      
+      // Generate all multisets of (prime, count) such that sum(prime*count) = k
+      function* allDecompositions(k, primes, maxCounts, idx = 0, current = {}) {
+        if (idx === primes.length) {
+          if (k === 0) yield { ...current };
+          return;
+        }
+        const p = primes[idx];
+        for (let cnt = 0; cnt <= Math.min(Math.floor(k / p), maxCounts[p]); cnt++) {
+          current[p] = cnt;
+          yield* allDecompositions(k - cnt * p, primes, maxCounts, idx + 1, current);
+        }
+      }
+
+      // Select cycles to create a balanced arrangement
+      function selectCycles(n, k) {
+        // Get prime factorization of n
+        const factors = primeFactorization(n);
+        const uniquePrimes = [...new Set(factors)];
+        // For each prime, how many cycles of that length are available?
+        const maxCycles = {};
+        uniquePrimes.forEach(p => { maxCycles[p] = n / p; });
+
+        // Generate all possible cycles for each unique prime
+        const cyclesByPrime = {};
+        uniquePrimes.forEach(p => {
+          const step = n / p;
+          const cycles = Array.from({length: step}, (_, i) =>
+            Array.from({length: p}, (_, j) => (i + j*step) % n)
+          );
+          cyclesByPrime[p] = cycles;
+        });
+
+        // Timeout logic to prevent infinite search
+        const startTime = Date.now();
+        const TIMEOUT_MS = 2000;
+
+        // Try all possible decompositions of k as a sum of the available primes
+        for (const decomp of allDecompositions(k, uniquePrimes, maxCycles)) {
+          // Timeout check
+          if (Date.now() - startTime > TIMEOUT_MS) return [];
+          // Skip decompositions that use zero cycles for all primes
+          if (Object.values(decomp).every(cnt => cnt === 0)) continue;
+          // Recursive backtracking to pick cycles of each length, ensuring disjointness
+          function backtrack(primeList, idx, chosen, usedSlots) {
+            if (Date.now() - startTime > TIMEOUT_MS) return null;
+            if (idx === primeList.length) {
+              // Flatten chosen cycles
+              const slots = chosen.flat();
+              if (slots.length === k) return slots;
+              return null;
+            }
+            const p = parseInt(primeList[idx]);
+            const cycles = cyclesByPrime[p];
+            const m = decomp[p];
+            // Try all combinations of m cycles from cycles (without overlap)
+            function* combinations(arr, m, start = 0, pick = []) {
+              if (pick.length === m) { yield pick.slice(); return; }
+              for (let i = start; i <= arr.length - (m - pick.length); i++) {
+                pick.push(arr[i]);
+                yield* combinations(arr, m, i + 1, pick);
+                pick.pop();
+              }
+            }
+            for (const combo of combinations(cycles, m)) {
+              // Timeout check
+              if (Date.now() - startTime > TIMEOUT_MS) return null;
+              // Check for overlap
+              const flat = combo.flat();
+              const overlap = flat.some(slot => usedSlots.has(slot));
+              if (overlap) continue;
+              // Add these slots and recurse
+              combo.forEach(cyc => cyc.forEach(slot => usedSlots.add(slot)));
+              const result = backtrack(primeList, idx + 1, chosen.concat(combo), usedSlots);
+              combo.forEach(cyc => cyc.forEach(slot => usedSlots.delete(slot)));
+              if (result) return result;
+            }
+            return null;
+          }
+          const result = backtrack(uniquePrimes, 0, [], new Set());
+          if (result) return result;
+        }
+        return [];
+      }
+      
+      // Try to find a balanced arrangement using cycle decomposition
+      function findBalancedArrangementCycles(n, k) {
+        try {
+          const slots = selectCycles(n, k);
+          
+          // Verify that the arrangement is balanced
+          if (slots.length === k) {
+            let sx = 0, sy = 0;
+            for (const i of slots) {
+              const angle = 2 * Math.PI * i / n;
+              sx += Math.cos(angle);
+              sy += Math.sin(angle);
+            }
+            
+            if (Math.hypot(sx, sy) < EPS) {
+              return slots;
+            }
+          }
+        } catch (e) {
+          console.error("Error in cycle decomposition:", e);
+        }
+        
+        return []; // Return empty array if no valid arrangement found
+      }
+
+      // Heuristic random search for a balanced arrangement
+      async function heuristicSearch(n, k, timeout = 10000) {
+        // Try cycle decomposition approach first
+        const cycleResult = findBalancedArrangementCycles(n, k);
+        if (cycleResult.length > 0) {
+          return cycleResult;
+        }
+        
+        // Fall back to random search if cycle decomposition fails
+        const startTime = Date.now();
+        const workers = 4; // Number of parallel searches
+        let canceled = false;
+        
+        // Create a promise that rejects after timeout
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => {
+            canceled = true;
+            reject(new Error('Timeout exceeded'));
+          }, timeout);
+        });
+        
+        // Promise for finding a solution
+        const searchPromise = new Promise(resolve => {
+          // Run multiple search attempts in parallel
+          const searchAttempts = Array(workers).fill().map(() => {
+            return (async () => {
+              while (!canceled) {
+                // Generate random tube positions
+                const positions = new Set();
+                while (positions.size < k) {
+                  positions.add(Math.floor(Math.random() * n));
+                }
+                const pos = [...positions];
+                
+                // Check if balanced
+                let sx = 0, sy = 0;
+                for (const i of pos) {
+                  const angle = 2 * Math.PI * i / n;
+                  sx += Math.cos(angle);
+                  sy += Math.sin(angle);
+                }
+                
+                if (Math.hypot(sx, sy) < EPS) {
+                  resolve(pos);
+                  return;
+                }
+                
+                // Yield to the event loop occasionally
+                if (Date.now() - startTime > 50) {
+                  await new Promise(r => setTimeout(r, 0));
+                }
+              }
+            })();
+          });
+          
+          // When all searches fail (should only happen if canceled)
+          Promise.all(searchAttempts).then(() => resolve([]));
+        });
+        
+        try {
+          // Race between finding a solution and timeout
+          return await Promise.race([searchPromise, timeoutPromise]);
+        } catch (e) {
+          console.log('Heuristic search timed out');
+          return []; // Return empty array if timeout
+        }
+      }
+
       function toggle(i) {
         if (manualPos.has(i)) manualPos.delete(i);
         else if (manualPos.size < +kInput.value) manualPos.add(i);
@@ -559,6 +786,7 @@
         const { sum, mag } = drawRotor(pos);
         const balanced = mag < EPS;
         resultP.className = 'result ' + (balanced ? 'balanced' : 'unbalanced');
+        const currentMode = modeSel.value; // Get current mode
 
         if (isCalculating) {
              resultP.textContent = 'Calculating arrangements...';
@@ -594,13 +822,28 @@
         const mathResult = `= ${sum[0].toFixed(3)} + i·${sum[1].toFixed(3)}`;
         mathBox.innerHTML = mathEqBase + (pos.length > 0 ? mathResult : '') + (balanced && pos.length > 0 ? ' = 0' : '');
 
-        legend.innerHTML = `<strong>Equation Breakdown:</strong><br>
+        // Update legend based on current mode
+        let legendHTML = `<strong>Equation Breakdown:</strong><br>
           Σ – sum over tubes<br>
           e<sup>iθ</sup> – unit vector at angle θ<br>
           θ = 2π·j/n, where:<br>
           &nbsp;&nbsp;• j = tube slot index (0-based)<br>
           &nbsp;&nbsp;• n = total slots<br>
           Perfectly balanced (as all things should be) when Σ = 0`;
+          
+        // Add cycle explanation for cycle decomposition mode
+        if (currentMode === 'cycle' && balanced) {
+          const factors = primeFactorization(n);
+          const uniqueFactors = [...new Set(factors)];
+          
+          legendHTML += `<br><br><strong>Cycle Decomposition:</strong><br>
+            A balanced arrangement can be constructed using cycles where:<br>
+            &nbsp;&nbsp;• Each cycle has length p, where p is a prime factor of n<br>
+            &nbsp;&nbsp;• n = ${n} has prime factors: ${uniqueFactors.join(', ')}<br>
+            &nbsp;&nbsp;• k = ${pos.length} can be expressed as a sum of these factors`;
+        }
+        
+        legend.innerHTML = legendHTML;
       }
 
       runBtn.addEventListener('click', () => {
@@ -621,7 +864,60 @@
         runBtn.textContent = 'Calculating...';
         render([], 0, 0, true); // Call render with calculating flag
 
-        // Run calculation asynchronously
+        // Special handling for heuristic mode
+        if (modeSel.value === 'heuristic') {
+          // Use async heuristic search
+          heuristicSearch(n, k).then(solution => {
+            // Render the solution
+            render(solution, solution.length > 0 ? 1 : 0, solution.length > 0 ? 1 : 0);
+            
+            // Update result text for heuristic mode
+            if (solution.length > 0) {
+              resultP.textContent = 'Balanced ✅ → Σspin = 0 (heuristic search found a solution)';
+              resultP.className = 'result balanced';
+            } else {
+              resultP.textContent = 'No balanced arrangement found within time limit';
+              resultP.className = 'result unbalanced';
+            }
+            
+            // Restore button state
+            runBtn.disabled = false;
+            runBtn.textContent = 'Run';
+          });
+          return;
+        }
+        
+        // Special handling for cycle decomposition mode
+        if (modeSel.value === 'cycle') {
+          // Get prime factorization for display
+          const factors = primeFactorization(n);
+          const uniqueFactors = [...new Set(factors)];
+          
+          // Try to find a balanced arrangement using cycle decomposition
+          const solution = findBalancedArrangementCycles(n, k);
+          
+          // Render the solution
+          render(solution, solution.length > 0 ? 1 : 0, solution.length > 0 ? 1 : 0);
+          
+          // Update result text for cycle mode
+          if (solution.length > 0) {
+            const factorText = uniqueFactors.length > 0 
+              ? ` using prime factors [${uniqueFactors.join(', ')}]`
+              : '';
+            resultP.textContent = `Balanced ✅ → Σspin = 0 (cycle decomposition${factorText})`;
+            resultP.className = 'result balanced';
+          } else {
+            resultP.textContent = `No balanced arrangement found using cycle decomposition (prime factors: ${uniqueFactors.join(', ')})`;
+            resultP.className = 'result unbalanced';
+          }
+          
+          // Restore button state
+          runBtn.disabled = false;
+          runBtn.textContent = 'Run';
+          return;
+        }
+
+        // Run calculation asynchronously for other modes
         setTimeout(() => {
         const all = allBalanced(n, k);
         const total = all.length;
@@ -646,6 +942,12 @@
         render([], 0, 0);
       });
 
+      // Add event listener to nInput to update available modes when n changes
+      nInput.addEventListener('change', updateAvailableModes);
+      nInput.addEventListener('input', updateAvailableModes);
+
+      // Initial setup
+      updateAvailableModes();
       render([], 0, 0);
     });
   </script>
