@@ -10,17 +10,16 @@
   <style>
     :root {
       /* Light Mode (New Theme) */
-      --primary: #4a90e2; /* Soft Blue */
-      --primary-dark: #357abd; /* Darker Soft Blue */
-      /* --secondary: #7f9cf5; /* Removing secondary for simplicity */
-      --light-bg: #f7f9fa; /* Off-white */
-      --panel-bg: #ffffff; /* White */
-      --dark-text: #2d3748; /* Dark Slate-Gray */
-      --light-text: #f7fafc; /* Very Light Gray (opposite of dark-text) */
-      --border-color: #e2e8f0; /* Light Gray */
-      --tube-fill: #38a169; /* Green */
-      --empty-slot: #e53e3e; /* Red */
-      --vector: #dd6b20; /* Orange */
+      --primary: #4a90e2; /* Soft Blue (Button/Accent) */
+      --primary-dark: #357abd;
+      --light-bg: #f7f9fa;
+      --panel-bg: #ffffff;
+      --dark-text: #2d3748;
+      --light-text: #f7fafc;
+      --border-color: #e2e8f0;
+      --tube-fill: #2c7a7b; /* Darker Teal */
+      --empty-slot: #dd6b20; /* Orange (already set) */
+      --vector: #1a202c; /* Black/Dark Slate for light mode vectors */
       --font-sans: 'Atkinson Hyperlegible', sans-serif;
       --font-mono: 'Fira Code', monospace;
       --shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
@@ -28,17 +27,16 @@
       --link-color: var(--primary);
 
       /* Dark Mode (New Theme) */
-      --dark-primary: #63b3ed; /* Lighter Soft Blue */
-      --dark-primary-dark: #90cdf4; /* Even Lighter Blue */
-      /* --dark-secondary: #a3bffa; */
-      --dark-bg: #1a202c; /* Dark Slate */
-      --dark-panel-bg: #2d3748; /* Dark Gray-Blue */
-      --dark-dark-text: #4a5568; /* Medium Gray (unused mostly) */
-      --dark-light-text: #e2e8f0; /* Light Gray */
-      --dark-border-color: #4a5568; /* Gray */
-      --dark-tube-fill: #48bb78; /* Brighter Green */
-      --dark-empty-slot: #f56565; /* Brighter Red */
-      --dark-vector: #ed8936; /* Brighter Orange */
+      --dark-primary: #63b3ed; /* Lighter Soft Blue (Button/Accent) */
+      --dark-primary-dark: #90cdf4;
+      --dark-bg: #1a202c;
+      --dark-panel-bg: #2d3748;
+      --dark-dark-text: #4a5568;
+      --dark-light-text: #e2e8f0;
+      --dark-border-color: #4a5568;
+      --dark-tube-fill: #38b2ac; /* Slightly Darker Bright Teal */
+      --dark-empty-slot: #ed8936; /* Brighter Orange (already set) */
+      --dark-vector: #f6e05e; /* Bright Yellow */
       --dark-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
       --dark-button-text: #ffffff;
       --dark-link-color: var(--dark-primary);
@@ -47,7 +45,6 @@
     .dark-mode {
       --primary: var(--dark-primary);
       --primary-dark: var(--dark-primary-dark);
-      /* --secondary: var(--dark-secondary); */
       --light-bg: var(--dark-bg);
       --panel-bg: var(--dark-panel-bg);
       --dark-text: var(--dark-light-text);
@@ -91,8 +88,22 @@
 
     h1 {
       margin: 0;
-      font-size: 2rem; /* Slightly smaller */
-      color: var(--primary-dark);
+      font-size: 2.2rem;
+      font-weight: 700; /* Bold */
+      /* Text outline using text-shadow */
+      text-shadow:
+        -1px -1px 0 #000,
+         1px -1px 0 #000,
+        -1px  1px 0 #000,
+         1px  1px 0 #000; /* Black outline */
+    }
+
+    .h1-sigma {
+        color: var(--tube-fill); /* Teal */
+    }
+
+    .h1-pinzero {
+        color: var(--empty-slot); /* Orange */
     }
 
     .subtitle {
@@ -280,7 +291,7 @@
 <body>
   <div class="container">
     <header>
-      <h1>ΣpinZero</h1>
+      <h1><span class="h1-sigma">Σ</span><span class="h1-pinzero">pinZero</span></h1>
       <p class="subtitle">Centrifuge Tube Balancer</p>
       <button id="darkModeToggle" title="Toggle dark mode">☀️</button> <!-- Placeholder Button -->
     </header>
@@ -612,13 +623,13 @@
 
         // Run calculation asynchronously
         setTimeout(() => {
-            const all = allBalanced(n, k);
-            const total = all.length;
-            const unique = uniqueCount(all, n);
-            let pick = [];
+        const all = allBalanced(n, k);
+        const total = all.length;
+        const unique = uniqueCount(all, n);
+        let pick = [];
             if (total > 0) { // Only pick if solutions exist
-                if (modeSel.value === 'elegant') pick = elegantArrangement(all, n);
-                else if (modeSel.value === 'cursed') pick = cursedArrangement(all, n);
+        if (modeSel.value === 'elegant') pick = elegantArrangement(all, n);
+        else if (modeSel.value === 'cursed') pick = cursedArrangement(all, n);
                 else if (modeSel.value === 'random') pick = all[Math.floor(Math.random() * total)];
             }
             
