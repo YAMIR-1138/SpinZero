@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Centrifuge Tube Balancer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fira+Code&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Light Mode (New Theme) */
+      --primary: #4a90e2; /* Soft Blue */
+      --primary-dark: #357abd; /* Darker Soft Blue */
+      /* --secondary: #7f9cf5; /* Removing secondary for simplicity */
+      --light-bg: #f7f9fa; /* Off-white */
+      --panel-bg: #ffffff; /* White */
+      --dark-text: #2d3748; /* Dark Slate-Gray */
+      --light-text: #f7fafc; /* Very Light Gray (opposite of dark-text) */
+      --border-color: #e2e8f0; /* Light Gray */
+      --tube-fill: #38a169; /* Green */
+      --empty-slot: #e53e3e; /* Red */
+      --vector: #dd6b20; /* Orange */
+      --font-sans: 'Atkinson Hyperlegible', sans-serif;
+      --font-mono: 'Fira Code', monospace;
+      --shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      --button-text: #ffffff;
+      --link-color: var(--primary);
+
+      /* Dark Mode (New Theme) */
+      --dark-primary: #63b3ed; /* Lighter Soft Blue */
+      --dark-primary-dark: #90cdf4; /* Even Lighter Blue */
+      /* --dark-secondary: #a3bffa; */
+      --dark-bg: #1a202c; /* Dark Slate */
+      --dark-panel-bg: #2d3748; /* Dark Gray-Blue */
+      --dark-dark-text: #4a5568; /* Medium Gray (unused mostly) */
+      --dark-light-text: #e2e8f0; /* Light Gray */
+      --dark-border-color: #4a5568; /* Gray */
+      --dark-tube-fill: #48bb78; /* Brighter Green */
+      --dark-empty-slot: #f56565; /* Brighter Red */
+      --dark-vector: #ed8936; /* Brighter Orange */
+      --dark-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      --dark-button-text: #ffffff;
+      --dark-link-color: var(--dark-primary);
+    }
+
+    .dark-mode {
+      --primary: var(--dark-primary);
+      --primary-dark: var(--dark-primary-dark);
+      /* --secondary: var(--dark-secondary); */
+      --light-bg: var(--dark-bg);
+      --panel-bg: var(--dark-panel-bg);
+      --dark-text: var(--dark-light-text);
+      --light-text: var(--dark-dark-text);
+      --border-color: var(--dark-border-color);
+      --tube-fill: var(--dark-tube-fill);
+      --empty-slot: var(--dark-empty-slot);
+      --vector: var(--dark-vector);
+      --shadow: var(--dark-shadow);
+      --button-text: var(--dark-button-text);
+      --link-color: var(--dark-link-color);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; } /* Reset margin/padding */
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--light-bg);
+      color: var(--dark-text);
+      transition: background 0.3s, color 0.3s;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      margin: auto;
+      padding: 0.5rem; /* Reduced padding for smaller screens */
+    }
+    @media(min-width:768px) {
+       .container { padding: 1.5rem; }
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      position: relative; /* For positioning the toggle */
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 2rem; /* Slightly smaller */
+      color: var(--primary-dark);
+    }
+
+    .subtitle {
+      margin: 0.3rem 0 1rem;
+      color: var(--dark-text); /* Use primary text color instead of secondary */
+      opacity: 0.8; /* Make it slightly less prominent */
+    }
+
+    /* Dark Mode Toggle Button Placeholder Style */
+    #darkModeToggle {
+        position: absolute;
+        top: 0;
+        right: 0;
+        padding: 0.5rem;
+        background: var(--panel-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 50%; /* Make it round */
+        cursor: pointer;
+        font-size: 1.2rem; /* Adjust icon size */
+        line-height: 1;
+        width: 40px; /* Fixed size */
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.3s, border-color 0.3s;
+    }
+    #darkModeToggle:hover {
+        background: var(--light-bg); /* Use body bg for hover */
+    }
+
+    .main {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem; /* Slightly reduced gap on mobile */
+    }
+    @media(min-width: 768px) {
+        .main {
+            flex-direction: row;
+            align-items: flex-start; /* Align items top */
+            gap: 1.5rem; /* Restore gap on desktop */
+        }
+    }
+
+    .controls, .visual {
+      background: var(--panel-bg);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 1rem; /* Consistent padding */
+      border: 1px solid var(--border-color); /* Subtle border */
+      transition: background 0.3s, border-color 0.3s;
+    }
+    
+    @media(min-width:768px) {
+      .controls, .visual { padding: 1.25rem; /* More padding on desktop */ }
+    }
+
+    .controls {
+      flex: 1;
+      min-width: 250px; /* Prevent controls getting too squished */
+    }
+    @media(min-width: 768px) {
+        .controls { flex: 0 1 350px; } /* Fixed width on larger screens */
+    }
+
+    .visual {
+      flex: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 0; /* Allow shrinking */
+      padding: 1.5rem; /* Increased padding */
+      overflow: visible; /* Prevent clipping */
+    }
+
+    .form-group { margin-bottom: 1rem; } /* Increased spacing */
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+      color: var(--dark-text); /* Ensure label color updates */
+    }
+
+    input[type=number], select {
+      width: 100%;
+      padding: 0.6rem; /* Increased padding */
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background-color: var(--light-bg); /* Match body bg */
+      color: var(--dark-text);
+      transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 0.8rem;
+      margin-top: 1.2rem; /* Increased spacing */
+    }
+
+    button {
+      flex: 1;
+      padding: 0.75rem; /* Increased padding */
+      border: none;
+      border-radius: 4px;
+      background: var(--primary);
+      color: var(--button-text); /* Use variable */
+      cursor: pointer;
+      font-weight: 600; /* Bolder text */
+      transition: background 0.2s;
+    }
+
+    button:hover { background: var(--primary-dark); }
+
+    .result {
+      margin-top: 1rem; /* Increased spacing */
+      font-weight: 600;
+      min-height: 1.2em; /* Prevent layout shift */
+    }
+
+    .balanced { color: var(--tube-fill); }
+    .unbalanced { color: var(--empty-slot); }
+
+    svg {
+      max-width: 100%;
+      height: auto;
+      display: block; /* Remove extra space below */
+      margin-bottom: 1rem; /* Space below SVG */
+      overflow: visible; /* Prevent clipping */
+    }
+
+    /* Make marker lines thinner in dark mode maybe? */
+     .dark-mode svg line[stroke='var(--dark-text)'] {
+        /* Example: stroke: var(--dark-border-color); if needed */
+     }
+     /* Adjust vector colors */
+     svg line[stroke^="hsl"] { stroke: var(--vector); } /* Override HSL for now */
+     .dark-mode svg line[stroke^="hsl"] { stroke: var(--dark-vector); }
+
+     /* Style the arrowhead */
+    #arrowhead polygon { fill: var(--vector); }
+    .dark-mode #arrowhead polygon { fill: var(--dark-vector); }
+
+    /* Make numbers light in dark mode */
+    .dark-mode svg text {
+      fill: var(--dark-light-text);
+    }
+
+    .math, .legend {
+      font-family: var(--font-mono);
+      background: var(--light-bg); /* Match body bg */
+      color: var(--dark-text);
+      padding: 1rem; /* Increased padding */
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      margin-top: 1rem; /* Consistent spacing */
+      overflow-x: auto;
+      font-size: 0.9rem;
+      width: 100%;
+      /* max-width: 320px; */ /* Allow full width */
+      transition: background 0.3s, color 0.3s, border-color 0.3s;
+    }
+     .math { word-break: break-all; } /* Prevent long math overflow */
+
+    footer {
+        text-align:center;
+        margin-top: auto; /* Push footer down */
+        padding: 1.5rem 1rem; /* Add padding */
+        font-size:0.85rem;
+        color: gray;
+        width: 100%;
+    }
+    footer a {
+        color: var(--link-color);
+        text-decoration: none;
+        transition: color 0.3s;
+    }
+    footer a:hover { text-decoration: underline; }
+
+  </style>
+  <!-- GoatCounter Analytics -->
+  <script data-goatcounter="https://yamir.goatcounter.com/count"
+          async src="//gc.zgo.at/count.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>ΣpinZero</h1>
+      <p class="subtitle">Centrifuge Tube Balancer</p>
+      <button id="darkModeToggle" title="Toggle dark mode">☀️</button> <!-- Placeholder Button -->
+    </header>
+    <div class="main">
+      <div class="controls">
+        <div class="form-group">
+          <label for="nSlots">Number of rotor slots (n):</label>
+          <input id="nSlots" type="number" value="24" min="2">
+        </div>
+        <div class="form-group">
+          <label for="kTubes">Number of loaded tubes (k):</label>
+          <input id="kTubes" type="number" value="6" min="1">
+        </div>
+        <div class="form-group">
+          <label for="modeSel">Choose your flavor of balance:</label>
+          <select id="modeSel">
+            <option value="elegant">Elegant</option>
+            <option value="cursed">Cursed</option>
+            <option value="random">Random</option>
+            <option value="manual">Manual</option>
+          </select>
+        </div>
+        <div class="buttons">
+          <button id="runBtn">Run</button>
+          <button id="clearBtn">Clear</button>
+        </div>
+        <p id="result" class="result"></p>
+      </div>
+      <div class="visual">
+        <svg id="rotorSvg" viewBox="0 0 400 400" width="100%" height="auto">
+          <defs>
+            <marker id="arrowhead" markerWidth="20" markerHeight="12" refX="0" refY="6" orient="auto" markerUnits="strokeWidth">
+              <polygon points="0 0,20 6,0 12" fill="var(--vector)"/>
+            </marker>
+          </defs>
+        </svg>
+        <div id="mathBox" class="math"></div>
+        <div id="legend" class="legend"></div>
+      </div>
+    </div>
+  </div>
+  <footer>
+    Inspired by mathematical insights from <a href="https://www.kurims.kyoto-u.ac.jp/EMIS/journals/INTEGERS/papers/k31/k31.pdf" target="_blank">Gary Sivek</a> and the <a href="https://mattbaker.blog/2018/06/25/the-balanced-centrifuge-problem/" target="_blank">Matt Baker blog</a>.
+    <br>Math is solid. Code may contain bugs. If your centrifuge goes flying, that's on me, not the roots of unity.
+    <br>
+    <span style="opacity:0.6;">Use responsibly. Developer assumes no liability for orbital rotors or rogue vectors.</span>
+    
+  </footer>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const svg = document.getElementById('rotorSvg');
+      const nInput = document.getElementById('nSlots');
+      const kInput = document.getElementById('kTubes');
+      const modeSel = document.getElementById('modeSel');
+      const runBtn = document.getElementById('runBtn');
+      const clearBtn = document.getElementById('clearBtn');
+      const resultP = document.getElementById('result');
+      const mathBox = document.getElementById('mathBox');
+      const legend = document.getElementById('legend');
+      let manualPos = new Set();
+      const EPS = 1e-6;
+
+      // Dark Mode Toggle Logic
+      const toggleButton = document.getElementById('darkModeToggle');
+      const body = document.body;
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+
+      function setDarkMode(isDark) {
+          if (isDark) {
+              body.classList.add('dark-mode');
+              toggleButton.textContent = '🌙'; // Moon icon
+              localStorage.setItem('theme', 'dark');
+          } else {
+              body.classList.remove('dark-mode');
+              toggleButton.textContent = '☀️'; // Sun icon
+              localStorage.setItem('theme', 'light');
+          }
+      }
+
+      // Check local storage first
+      const currentTheme = localStorage.getItem('theme');
+      if (currentTheme) {
+          setDarkMode(currentTheme === 'dark');
+      } else {
+          // Otherwise, check OS preference
+          setDarkMode(prefersDark.matches);
+      }
+
+      // Listen for toggle button click
+      toggleButton.addEventListener('click', () => {
+          setDarkMode(!body.classList.contains('dark-mode'));
+      });
+
+      // Optional: Listen for OS theme changes
+      prefersDark.addEventListener('change', (e) => {
+          // Only change if no explicit choice was made via button
+          if (!localStorage.getItem('theme')) {
+              setDarkMode(e.matches);
+          }
+      });
+
+      function hsl(i, total) {
+        return `hsl(${(i/total)*360},70%,50%)`;
+      }
+
+      function drawRotor(pos) {
+        const n = +nInput.value;
+        const r = 120; // Reduced radius for tubes
+        const cx = 200; // Centered in new viewBox
+        const cy = 200; // Centered in new viewBox
+        const angles = Array.from({ length: n }, (_, i) => 2*Math.PI*i/n - Math.PI/2);
+        svg.querySelectorAll('*:not(defs)').forEach(e => e.remove());
+
+        // Define marker positions ONLY for specific n values
+        let markerPositions = [];
+        if (n === 18) {
+            markerPositions = [1, 10, 4, 13, 7, 16]; // User specified for n=18
+        } else if (n === 24) {
+            markerPositions = [1, 5, 17, 9, 21, 13]; // User specified for n=24 (removed 3)
+        } else if (n === 30) {
+            markerPositions = [1, 16, 6, 21, 11, 26]; // User specified for n=30 (interpreting 11-20 as 11 and 26)
+        }
+        // Convert to 0-based index set for quick lookup (will be empty if n doesn't match)
+        const markerSet = new Set(markerPositions.map(p => p - 1));
+
+        // 1. Draw Labels and Markers First
+        angles.forEach((th, i) => {
+          // Move labels further outward but still inside viewBox
+          const labelRadius = r + 25; // Adjusted for smaller radius
+          const lx = cx + labelRadius*Math.cos(th);
+          const ly = cy + labelRadius*Math.sin(th);
+          const lbl = document.createElementNS(svg.namespaceURI, 'text');
+          lbl.setAttribute('x', lx);
+          lbl.setAttribute('y', ly);
+          lbl.setAttribute('font-size', '11');
+          lbl.setAttribute('text-anchor', 'middle');
+          lbl.setAttribute('dominant-baseline', 'middle');
+          lbl.textContent = i + 1;
+          lbl.setAttribute('fill', getComputedStyle(body).getPropertyValue('--dark-text').trim());
+          svg.appendChild(lbl);
+
+          // Replace marker lines with small dots
+          if (markerSet.has(i)) {
+            const markerRadius = r + 12; // Adjusted for smaller tube radius
+            const markerX = cx + markerRadius * Math.cos(th);
+            const markerY = cy + markerRadius * Math.sin(th);
+            
+            // Create a small circle instead of a line
+            const marker = document.createElementNS(svg.namespaceURI, 'circle');
+            marker.setAttribute('cx', markerX);
+            marker.setAttribute('cy', markerY);
+            marker.setAttribute('r', 2); // Small dot
+            marker.setAttribute('fill', 'var(--dark-text)');
+            svg.appendChild(marker);
+          }
+        });
+
+        // 2. Draw Vectors for loaded tubes
+        pos.forEach((i, j) => {
+          const th = angles[i];
+          const x = cx + r*Math.cos(th);
+          const y = cy + r*Math.sin(th);
+          const line = document.createElementNS(svg.namespaceURI, 'line');
+          line.setAttribute('x1', cx);
+          line.setAttribute('y1', cy);
+          line.setAttribute('x2', x);
+          line.setAttribute('y2', y);
+          // Use CSS variable for vector color
+          line.setAttribute('stroke', 'var(--vector)');
+          line.setAttribute('stroke-width', 3);
+          svg.appendChild(line);
+        });
+
+        // 3. Draw Tube Slots (Circles) Last - ensuring they are on top
+        angles.forEach((th, i) => {
+          const x = cx + r*Math.cos(th);
+          const y = cy + r*Math.sin(th);
+          const dot = document.createElementNS(svg.namespaceURI, 'circle');
+          dot.setAttribute('cx', x);
+          dot.setAttribute('cy', y);
+          dot.setAttribute('r', 8); // Tube radius
+          // Use CSS variables for fill colors
+          dot.setAttribute('fill', pos.includes(i) ? 'var(--tube-fill)' : 'var(--empty-slot)');
+          if (modeSel.value === 'manual') {
+            dot.style.cursor = 'pointer';
+            dot.addEventListener('click', () => toggle(i));
+          }
+          svg.appendChild(dot);
+        });
+
+        const sum = pos.reduce((s, i) => [s[0] + Math.cos(angles[i]), s[1] + Math.sin(angles[i])], [0, 0]);
+        const mag = Math.hypot(sum[0], sum[1]);
+        return { sum, mag };
+      }
+
+      function* combos(arr, k, start = 0, pick = []) {
+        if (pick.length === k) { yield pick.slice(); return; }
+        for (let i = start; i <= arr.length - (k - pick.length); i++) {
+          pick.push(arr[i]);
+          yield* combos(arr, k, i + 1, pick);
+          pick.pop();
+        }
+      }
+
+      function allBalanced(n, k) {
+        const idx = [...Array(n).keys()];
+        const out = [];
+        for (const c of combos(idx, k)) {
+          let sx = 0, sy = 0;
+          c.forEach(i => { sx += Math.cos(2*Math.PI*i/n); sy += Math.sin(2*Math.PI*i/n); });
+          if (Math.hypot(sx, sy) < EPS) out.push(c);
+        }
+        return out;
+      }
+
+      function uniqueCount(arr, n) {
+        const reps = new Set();
+        arr.forEach(c => {
+          const rots = [];
+          for (let r = 0; r < n; r++) {
+            const rotated = c.map(i => (i + r) % n).sort((a, b) => a - b);
+            rots.push(rotated.join(','));
+          }
+          reps.add(rots.sort()[0]);
+        });
+        return reps.size;
+      }
+
+      function elegantArrangement(arr, n) {
+        let best = null, bestSym = -1, bestMin = -1;
+        arr.forEach(c => {
+          const setC = new Set(c);
+          const symCount = c.reduce((cnt, i) => cnt + (setC.has((n - i) % n) ? 1 : 0), 0);
+          const sorted = c.slice().sort((a, b) => a - b);
+          const diffs = sorted.map((v, i) => i < sorted.length - 1 ? sorted[i+1] - v : (sorted[0] + n) - v);
+          const minSpacing = Math.min(...diffs);
+          if (symCount > bestSym || (symCount === bestSym && minSpacing > bestMin)) {
+            bestSym = symCount; bestMin = minSpacing; best = c;
+          }
+        });
+        return best || [];
+      }
+
+      function cursedArrangement(arr, n) {
+        let worst = null, worstMin = Infinity;
+        arr.forEach(c => {
+          const sorted = c.slice().sort((a, b) => a - b);
+          const diffs = sorted.map((v, i) => i < sorted.length - 1 ? sorted[i+1] - v : (sorted[0] + n) - v);
+          const m = Math.min(...diffs);
+          if (m < worstMin) { worstMin = m; worst = c; }
+        });
+        return worst || [];
+      }
+
+      function toggle(i) {
+        if (manualPos.has(i)) manualPos.delete(i);
+        else if (manualPos.size < +kInput.value) manualPos.add(i);
+        render([...manualPos], 0, 0);
+      }
+
+      function render(pos, total, unique) {
+        const { sum, mag } = drawRotor(pos);
+        const balanced = mag < EPS;
+        resultP.className = 'result ' + (balanced ? 'balanced' : 'unbalanced');
+
+        if (total === 0 && modeSel.value !== 'manual') {
+          resultP.textContent = 'No balanced patterns found for n=' + nInput.value + ', k=' + kInput.value;
+          resultP.className = 'result unbalanced';
+        } else if (balanced) {
+          resultP.textContent = 'Balanced ✅ → Σspin = 0';
+        } else {
+           // Format the complex number nicely
+          const realPart = sum[0].toFixed(3);
+          const imagPart = sum[1].toFixed(3);
+          const imagSign = sum[1] >= 0 ? '+' : '-';
+          const imagAbs = Math.abs(sum[1]).toFixed(3);
+          resultP.textContent = `Unbalanced ❌ → Σspin = ${realPart} ${imagSign} i·${imagAbs}`;
+        }
+
+        const n = +nInput.value;
+        const terms = pos.length > 0 ? pos.map(i => `e<sup>i·2π·${i}/${n}</sup>`).join(' + ') : '0';
+        const mathEqBase = `Σ e<sup>iθ</sup> = ${terms}`;
+        const mathResult = `= ${sum[0].toFixed(3)} + i·${sum[1].toFixed(3)}`;
+        mathBox.innerHTML = mathEqBase + (pos.length > 0 ? mathResult : '') + (balanced && pos.length > 0 ? ' = 0' : '');
+
+        legend.innerHTML = `<strong>Equation Breakdown:</strong><br>
+          Σ – sum over tubes<br>
+          e<sup>iθ</sup> – unit vector at angle θ<br>
+          θ = 2π·j/n, where:<br>
+          &nbsp;&nbsp;• j = tube slot index (0-based)<br>
+          &nbsp;&nbsp;• n = total slots<br>
+          Perfectly balanced (as all things should be) when Σ = 0`;
+      }
+
+      runBtn.addEventListener('click', () => {
+        const n = +nInput.value;
+        const k = +kInput.value;
+        if (k < 1 || k > n) return alert('Invalid tube count');
+        manualPos.clear();
+        if (modeSel.value === 'manual') return;
+
+        const all = allBalanced(n, k);
+        const total = all.length;
+        const unique = uniqueCount(all, n);
+        let pick = [];
+        if (modeSel.value === 'elegant') pick = elegantArrangement(all, n);
+        else if (modeSel.value === 'cursed') pick = cursedArrangement(all, n);
+        else if (modeSel.value === 'random') pick = total ? all[Math.floor(Math.random() * total)] : [];
+
+        render(pick, total, unique);
+      });
+
+      clearBtn.addEventListener('click', () => {
+        manualPos.clear();
+        render([], 0, 0);
+      });
+
+      render([], 0, 0);
+    });
+  </script>
+</body>
+</html>
