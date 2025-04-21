@@ -326,8 +326,11 @@
     Inspired by mathematical insights from <a href="https://www.kurims.kyoto-u.ac.jp/EMIS/journals/INTEGERS/papers/k31/k31.pdf" target="_blank">Gary Sivek</a> and the <a href="https://mattbaker.blog/2018/06/25/the-balanced-centrifuge-problem/" target="_blank">Matt Baker blog</a>.
     <br>Math is solid. Code may contain bugs. If your centrifuge goes flying, that's on me, not the roots of unity.
     <br>
-    <span style="opacity:0.6;">Use responsibly. Developer assumes no liability for orbital rotors or rogue vectors.</span>
-    
+    <span style="opacity:0.6;">Use responsibly — or your rotor may achieve low Earth orbit.</span>
+    <br><br>
+    Made just for fun by Yam Amir, a member of the <a href="https://rnd.tasmc.org.il/laboratories/the-translational-genetics-and-genomics-research-laboratory-prof-hagit-baris-feldman/" target="_blank">TGGR lab</a>.
+    <br>
+    Code available on <a href="https://github.com/YAMIR-1138/SpinZero" target="_blank">GitHub</a>.
   </footer>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -541,24 +544,38 @@
         render([...manualPos], 0, 0);
       }
 
-      function render(pos, total, unique) {
+      function render(pos, total, unique, isCalculating = false) {
         const { sum, mag } = drawRotor(pos);
         const balanced = mag < EPS;
         resultP.className = 'result ' + (balanced ? 'balanced' : 'unbalanced');
 
-        if (total === 0 && modeSel.value !== 'manual') {
-          resultP.textContent = 'No balanced patterns found for n=' + nInput.value + ', k=' + kInput.value;
+        if (isCalculating) {
+             resultP.textContent = 'Calculating arrangements...';
+             resultP.className = 'result'; // Neutral color while calculating
+             mathBox.innerHTML = ''; // Clear math box
+             legend.innerHTML = ''; // Clear legend
+             return; // Don't show balance status or math yet
+        }
+
+        let resultText = '';
+        if (total === 0 && pos.length === 0 && modeSel.value !== 'manual') {
+          resultText = 'No balanced patterns found for n=' + nInput.value + ', k=' + kInput.value;
           resultP.className = 'result unbalanced';
         } else if (balanced) {
-          resultP.textContent = 'Balanced ✅ → Σspin = 0';
+          resultText = 'Balanced ✅ → Σspin = 0';
         } else {
-           // Format the complex number nicely
           const realPart = sum[0].toFixed(3);
           const imagPart = sum[1].toFixed(3);
           const imagSign = sum[1] >= 0 ? '+' : '-';
           const imagAbs = Math.abs(sum[1]).toFixed(3);
-          resultP.textContent = `Unbalanced ❌ → Σspin = ${realPart} ${imagSign} i·${imagAbs}`;
+          resultText = `Unbalanced ❌ → Σspin = ${realPart} ${imagSign} i·${imagAbs}`;
         }
+
+        // Add stats back if applicable
+        if (total > 0 && modeSel.value !== 'manual') {
+             resultText += ` (${unique} unique pattern${unique !== 1 ? 's' : ''} from ${total} total solution${total !== 1 ? 's' : ''})`;
+        }
+        resultP.textContent = resultText;
 
         const n = +nInput.value;
         const terms = pos.length > 0 ? pos.map(i => `e<sup>i·2π·${i}/${n}</sup>`).join(' + ') : '0';
@@ -578,19 +595,39 @@
       runBtn.addEventListener('click', () => {
         const n = +nInput.value;
         const k = +kInput.value;
-        if (k < 1 || k > n) return alert('Invalid tube count');
+        if (k < 1 || k > n) return alert('Invalid tube count: k must be between 1 and n.');
         manualPos.clear();
-        if (modeSel.value === 'manual') return;
 
-        const all = allBalanced(n, k);
-        const total = all.length;
-        const unique = uniqueCount(all, n);
-        let pick = [];
-        if (modeSel.value === 'elegant') pick = elegantArrangement(all, n);
-        else if (modeSel.value === 'cursed') pick = cursedArrangement(all, n);
-        else if (modeSel.value === 'random') pick = total ? all[Math.floor(Math.random() * total)] : [];
+        // Special handling for manual mode - render immediately
+        if (modeSel.value === 'manual') {
+            // Render empty state for manual mode initially or based on manualPos if needed
+            render([...manualPos], 0, 0); 
+            return; 
+        }
 
-        render(pick, total, unique);
+        // Show loading state
+        runBtn.disabled = true;
+        runBtn.textContent = 'Calculating...';
+        render([], 0, 0, true); // Call render with calculating flag
+
+        // Run calculation asynchronously
+        setTimeout(() => {
+            const all = allBalanced(n, k);
+            const total = all.length;
+            const unique = uniqueCount(all, n);
+            let pick = [];
+            if (total > 0) { // Only pick if solutions exist
+                if (modeSel.value === 'elegant') pick = elegantArrangement(all, n);
+                else if (modeSel.value === 'cursed') pick = cursedArrangement(all, n);
+                else if (modeSel.value === 'random') pick = all[Math.floor(Math.random() * total)];
+            }
+            
+            render(pick, total, unique); // Render final result
+
+            // Restore button state
+            runBtn.disabled = false;
+            runBtn.textContent = 'Run';
+        }, 10); // Small delay allows UI to update before heavy calculation
       });
 
       clearBtn.addEventListener('click', () => {
