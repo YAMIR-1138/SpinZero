@@ -331,7 +331,7 @@
             <option value="heuristic">Heuristic Random</option>
             <option value="manual">Manual</option>
           </select>
-          <small id="modeHelpText" style="display: none; color: var(--empty-slot); margin-top: 4px;">For n>24, only Cycle Decomposition, Evil, Heuristic Random, and Manual modes are available due to computational complexity.</small>
+          <small id="modeHelpText" style="display: none; color: var(--empty-slot); margin-top: 4px;">For n>24, only Cycle Decomposition, Heuristic Random, and Manual modes are available due to computational complexity.</small>
         </div>
         <div class="buttons">
           <button id="runBtn">Run</button>
@@ -387,7 +387,7 @@
         
         for (let i = 0; i < options.length; i++) {
           const value = options[i].value;
-          if (value !== 'manual' && value !== 'heuristic' && value !== 'cycle' && value !== 'evil') {
+          if (value !== 'manual' && value !== 'heuristic' && value !== 'cycle') {
             // Disable or enable based on n value
             options[i].disabled = isLargeN;
           }
@@ -768,12 +768,6 @@
 
       // Heuristic random search for a balanced arrangement
       async function heuristicSearch(n, k, timeout = 10000) {
-        // Try cycle decomposition approach first
-        const cycleResult = findBalancedArrangementCycles(n, k);
-        if (cycleResult.length > 0) {
-          return cycleResult;
-        }
-        
         // Fall back to random search if cycle decomposition fails
         const startTime = Date.now();
         const workers = 4; // Number of parallel searches
@@ -908,6 +902,17 @@
         const n = +nInput.value;
         const k = +kInput.value;
         if (k < 1 || k > n) return alert('Invalid tube count: k must be between 1 and n.');
+        
+        // Safety check: For n > 24, only allow certain modes
+        if (n > 24 && !['manual', 'heuristic', 'cycle'].includes(modeSel.value)) {
+          alert('For n > 24, only Cycle Decomposition, Heuristic Random, and Manual modes are available due to computational complexity.');
+          // Switch to cycle decomposition mode
+          modeSel.value = 'cycle';
+          // Update all dropdown options to reflect current n value
+          updateAvailableModes();
+          return;
+        }
+        
         manualPos.clear();
 
         // Special handling for manual mode - render immediately
