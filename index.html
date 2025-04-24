@@ -226,6 +226,15 @@
 
     .balanced { color: var(--tube-fill); }
     .unbalanced { color: var(--empty-slot); }
+    .evil { 
+      color: #ff0000; /* Bright red for evil mode */
+      text-shadow:
+        -1px -1px 0 #000,
+         1px -1px 0 #000,
+        -1px  1px 0 #000,
+         1px  1px 0 #000; /* Black outline */
+      font-weight: bold;
+    }
 
     svg {
       max-width: 100%;
@@ -293,6 +302,12 @@
     <header>
       <h1><span class="h1-sigma">Σ</span><span class="h1-pinzero">pinZero</span></h1>
       <p class="subtitle">Centrifuge Tube Balancer</p>
+      <a href="https://github.com/YAMIR-1138/SpinZero" target="_blank" rel="noopener" style="position: absolute; left: 0; top: 0; display: flex; align-items: center; padding: 0.5rem; font-size: 0.85rem; color: var(--link-color);">
+        <svg height="24" width="24" viewBox="0 0 16 16" version="1.1" aria-hidden="true">
+          <path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" fill="currentColor"></path>
+        </svg>
+        <span style="margin-left: 0.5rem;">Documentation & README</span>
+      </a>
       <button id="darkModeToggle" title="Toggle dark mode">☀️</button> <!-- Placeholder Button -->
     </header>
     <div class="main">
@@ -308,14 +323,15 @@
         <div class="form-group">
           <label for="modeSel">Choose your flavor of balance:</label>
           <select id="modeSel">
+            <option value="cycle">Cycle Decomposition</option>
             <option value="elegant">Elegant</option>
             <option value="cursed">Cursed</option>
+            <option value="evil">Evil</option>
             <option value="random">Random</option>
             <option value="heuristic">Heuristic Random</option>
-            <option value="cycle">Cycle Decomposition</option>
             <option value="manual">Manual</option>
           </select>
-          <small id="modeHelpText" style="display: none; color: var(--empty-slot); margin-top: 4px;">For n>24, only Cycle Decomposition, Heuristic Random, and Manual modes are available due to computational complexity.</small>
+          <small id="modeHelpText" style="display: none; color: var(--empty-slot); margin-top: 4px;">For n>24, only Cycle Decomposition, Evil, Heuristic Random, and Manual modes are available due to computational complexity.</small>
         </div>
         <div class="buttons">
           <button id="runBtn">Run</button>
@@ -371,7 +387,7 @@
         
         for (let i = 0; i < options.length; i++) {
           const value = options[i].value;
-          if (value !== 'manual' && value !== 'heuristic' && value !== 'cycle') {
+          if (value !== 'manual' && value !== 'heuristic' && value !== 'cycle' && value !== 'evil') {
             // Disable or enable based on n value
             options[i].disabled = isLargeN;
           }
@@ -568,14 +584,56 @@
       }
 
       function cursedArrangement(arr, n) {
-        let worst = null, worstMin = Infinity;
+        let worst = null, maxDifferentSpacings = -1;
         arr.forEach(c => {
           const sorted = c.slice().sort((a, b) => a - b);
           const diffs = sorted.map((v, i) => i < sorted.length - 1 ? sorted[i+1] - v : (sorted[0] + n) - v);
-          const m = Math.min(...diffs);
-          if (m < worstMin) { worstMin = m; worst = c; }
+          // Count the number of different spacings (using a Set to get unique values)
+          const uniqueDiffs = new Set(diffs);
+          
+          // Pick the arrangement with the most different spacings between tubes
+          if (uniqueDiffs.size > maxDifferentSpacings) { 
+            maxDifferentSpacings = uniqueDiffs.size; 
+            worst = c; 
+          }
         });
         return worst || [];
+      }
+
+      // Evil arrangement - finds the configuration that's almost balanced but not quite
+      function evilArrangement(n, k) {
+        // We need to find an unbalanced arrangement that's close to balanced
+        // We'll generate random configurations and find the one with the smallest non-zero magnitude
+        const trials = 10000; // Number of tries to find an evil arrangement
+        let bestMag = Infinity;
+        let bestArrangement = [];
+        
+        for (let i = 0; i < trials; i++) {
+          // Generate a random arrangement
+          const positions = new Set();
+          while (positions.size < k) {
+            positions.add(Math.floor(Math.random() * n));
+          }
+          const pos = [...positions];
+          
+          // Calculate the sum of vectors
+          let sx = 0, sy = 0;
+          for (const j of pos) {
+            const angle = 2 * Math.PI * j / n;
+            sx += Math.cos(angle);
+            sy += Math.sin(angle);
+          }
+          
+          const mag = Math.hypot(sx, sy);
+          
+          // Find the arrangement with the smallest non-zero magnitude
+          if (mag > EPS && mag < bestMag) {
+            bestMag = mag;
+            bestArrangement = pos;
+          }
+        }
+        
+        return bestArrangement;
       }
 
       // Prime factorization function
@@ -927,6 +985,25 @@
         if (modeSel.value === 'elegant') pick = elegantArrangement(all, n);
         else if (modeSel.value === 'cursed') pick = cursedArrangement(all, n);
                 else if (modeSel.value === 'random') pick = all[Math.floor(Math.random() * total)];
+            }
+            
+            // Handle evil mode separately since it doesn't use balanced arrangements
+            if (modeSel.value === 'evil') {
+                pick = evilArrangement(n, k);
+                // For evil mode, always use the found arrangement regardless of total
+                render(pick, 0, 0);
+                // Custom result text for evil mode
+                const { sum, mag } = drawRotor(pick);
+                if (pick.length > 0) {
+                    resultP.textContent = `Evil ☠️ → Σspin ≈ ${mag.toFixed(6)} (smallest possible non-zero imbalance)`;
+                    resultP.className = 'result evil';
+                } else {
+                    resultP.textContent = 'No evil arrangement found';
+                    resultP.className = 'result evil';
+                }
+                runBtn.disabled = false;
+                runBtn.textContent = 'Run';
+                return;
             }
             
             render(pick, total, unique); // Render final result
