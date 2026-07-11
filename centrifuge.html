@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>ΣpinZero — Interactive Centrifuge</title>
-  <meta name="description" content="An interactive, spinnable centrifuge. Load tubes, hit spin, and watch balanced rotors run smooth while unbalanced ones shake themselves apart.">
+  <title>ΣpinZero: Interactive Centrifuge</title>
+  <meta name="description" content="A spinnable centrifuge model. Load tubes, set the speed, and see whether the rotor runs balanced or shakes.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fira+Code&display=swap" rel="stylesheet">
@@ -198,7 +198,7 @@
     <header>
       <a class="backlink" href="index.html">← Back to solver</a>
       <h1><span class="h1-sigma">Σ</span><span class="h1-pinzero">pinZero</span></h1>
-      <p class="subtitle">Interactive Centrifuge — load it, spin it, wreck it</p>
+      <p class="subtitle">Load tubes, set the speed, and spin the rotor</p>
       <button id="darkModeToggle" title="Toggle dark mode">☀️</button>
     </header>
 
@@ -246,22 +246,23 @@
         <div id="math" class="math"></div>
 
         <details>
-          <summary>How this works (and why it shakes)</summary>
+          <summary>How this works</summary>
           <p>
             Each tube is a unit vector pointing at its slot. The rotor is balanced when those
-            vectors cancel: <code>Σ e^(i·2π·j/n) = 0</code>. The leftover sum is the
-            <em>imbalance</em> — a vector pointing at the "heavy side."
+            vectors cancel: <code>Σ e^(i·2π·j/n) = 0</code>. The leftover sum is the imbalance,
+            a vector that points at the heavy side.
           </p>
           <p>
-            When you spin, the heavy side is flung outward by a force that grows with
-            <code>|Σspin| × RPM²</code>. That force sweeps around with the rotor, so the whole
-            machine traces a circle — the wobble you see. Balance it (imbalance → 0) and even
-            at full speed it runs dead smooth.
+            When you spin, that heavy side is pushed outward by a force proportional to
+            <code>|Σspin| × RPM²</code>. The force sweeps around with the rotor, so the machine
+            traces a small circle, which is the wobble. When the imbalance is zero there is
+            nothing to push, so a balanced rotor stays centered even at full speed.
           </p>
           <p>
-            <strong>Auto-Balance</strong> uses prime-factor cycle decomposition to place tubes
-            in a provably balanced pattern (when one exists). If <code>n</code> and <code>k</code>
-            can't be balanced, it says so — that's the math, not a bug.
+            <strong>Auto-Balance</strong> uses prime-factor cycle decomposition to place the
+            tubes in a balanced pattern when one exists. Some combinations of <code>n</code> and
+            <code>k</code> cannot be balanced at all; when that happens it says so instead of
+            returning a wrong answer.
           </p>
         </details>
       </div>
@@ -276,8 +277,7 @@
   </div>
 
   <footer>
-    Part of <a href="index.html">ΣpinZero</a> — the balanced centrifuge toy.
-    Balanced rotors are happy rotors. <br>
+    Part of <a href="index.html">ΣpinZero</a>, the balanced centrifuge tool.<br>
     Code on <a href="https://github.com/YAMIR-1138/SpinZero" target="_blank" rel="noopener">GitHub</a>.
   </footer>
 
@@ -444,7 +444,7 @@
       ring.setAttribute('opacity', 0.5);
       rotorG.appendChild(ring);
 
-      // imbalance arrow (rotor frame) — drawn before slots so slots sit on top
+      // imbalance arrow (rotor frame); drawn before slots so slots sit on top
       const arrow = document.createElementNS(SVG_NS, 'line');
       arrow.setAttribute('id', 'imbArrow');
       arrow.setAttribute('x1', 0); arrow.setAttribute('y1', 0);
@@ -550,7 +550,7 @@
       // verdict
       verdictEl.classList.remove('balanced', 'unbalanced', 'impossible');
       if (k === 0) {
-        verdictEl.textContent = 'Empty rotor — load some tubes';
+        verdictEl.textContent = 'Empty rotor. Load some tubes.';
       } else if (imb.mag < EPS) {
         verdictEl.textContent = 'Balanced ✅  Σspin = 0';
         verdictEl.classList.add('balanced');
@@ -707,7 +707,7 @@
         kInput.value = k;
         refreshTubes();
         updateReadouts();
-        verdictEl.textContent = `Can't balance k=${k} in n=${n} — no arrangement exists`;
+        verdictEl.textContent = `Can't balance k=${k} in n=${n} (no arrangement exists)`;
         verdictEl.classList.remove('balanced', 'unbalanced');
         verdictEl.classList.add('impossible');
       }

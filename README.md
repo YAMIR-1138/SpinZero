@@ -4,7 +4,7 @@
 
 Enter the number of slots and tubes, choose a mode, and the app visualizes whether your configuration is balanced (Σspin = 0) — or dangerously chaotic.
 
-Prefer to play rather than solve? There's now an **[interactive centrifuge](centrifuge.html)** — load tubes by tapping slots, dial up the RPM, hit **Spin**, and watch a balanced rotor run dead-smooth while an unbalanced one wobbles itself toward low Earth orbit. The wobble grows with `|Σspin| × RPM²`, so you can *feel* why balance matters.
+There's also an **[interactive centrifuge](centrifuge.html)**: tap slots to load tubes, set the RPM, and hit **Spin**. A balanced rotor stays centered; an unbalanced one wobbles, and the wobble grows with `|Σspin| × RPM²`.
 
 ---
 
@@ -62,11 +62,11 @@ For **n > 24**, the app automatically disables computationally intensive modes (
   - *Available for all n values*
 
 - **Interactive Centrifuge** 🌀
-  - A hands-on playground instead of a solver
-  - Tap slots to load/unload tubes, set the speed, and hit **Spin**
-  - Balanced rotors spin smoothly; unbalanced ones shake — wobble scales with `|Σspin| × RPM²`
-  - **Auto-Balance** snaps the tubes into a provably balanced arrangement (or tells you honestly when none exists)
-  - Live imbalance vector, vibration meter, and a rough centrifugal-force (×g) readout
+  - A hands-on version rather than a solver
+  - Tap slots to load or unload tubes, set the speed, and hit **Spin**
+  - Balanced rotors spin smoothly; unbalanced ones shake, with the wobble scaling as `|Σspin| × RPM²`
+  - **Auto-Balance** places the tubes in a balanced arrangement, or reports when none exists
+  - Live imbalance vector, vibration meter, and an approximate centrifugal-force (×g) readout
   - *Available at [`centrifuge.html`](centrifuge.html)*
 
 **Try it here:**  
