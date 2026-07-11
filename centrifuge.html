@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ΣpinZero — Interactive Centrifuge</title>
+  <meta name="description" content="An interactive, spinnable centrifuge. Load tubes, hit spin, and watch balanced rotors run smooth while unbalanced ones shake themselves apart.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fira+Code&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #4a90e2;
+      --primary-dark: #357abd;
+      --light-bg: #f7f9fa;
+      --panel-bg: #ffffff;
+      --dark-text: #2d3748;
+      --light-text: #f7fafc;
+      --border-color: #e2e8f0;
+      --tube-fill: #2c7a7b;
+      --empty-slot: #dd6b20;
+      --vector: #1a202c;
+      --font-sans: 'Atkinson Hyperlegible', sans-serif;
+      --font-mono: 'Fira Code', monospace;
+      --shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      --button-text: #ffffff;
+      --link-color: var(--primary);
+      --disc: #cbd5e0;
+      --disc-edge: #a0aec0;
+      --hub: #718096;
+      --ok: #2c7a7b;
+      --warn: #dd6b20;
+      --danger: #e53e3e;
+
+      --dark-primary: #63b3ed;
+      --dark-primary-dark: #90cdf4;
+      --dark-bg: #1a202c;
+      --dark-panel-bg: #2d3748;
+      --dark-dark-text: #4a5568;
+      --dark-light-text: #e2e8f0;
+      --dark-border-color: #4a5568;
+      --dark-tube-fill: #38b2ac;
+      --dark-empty-slot: #ed8936;
+      --dark-vector: #f6e05e;
+      --dark-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      --dark-button-text: #ffffff;
+      --dark-link-color: var(--dark-primary);
+      --dark-disc: #4a5568;
+      --dark-disc-edge: #2d3748;
+      --dark-hub: #718096;
+      --dark-ok: #38b2ac;
+      --dark-warn: #ed8936;
+      --dark-danger: #fc8181;
+    }
+    .dark-mode {
+      --primary: var(--dark-primary);
+      --primary-dark: var(--dark-primary-dark);
+      --light-bg: var(--dark-bg);
+      --panel-bg: var(--dark-panel-bg);
+      --dark-text: var(--dark-light-text);
+      --light-text: var(--dark-dark-text);
+      --border-color: var(--dark-border-color);
+      --tube-fill: var(--dark-tube-fill);
+      --empty-slot: var(--dark-empty-slot);
+      --vector: var(--dark-vector);
+      --shadow: var(--dark-shadow);
+      --button-text: var(--dark-button-text);
+      --link-color: var(--dark-link-color);
+      --disc: var(--dark-disc);
+      --disc-edge: var(--dark-disc-edge);
+      --hub: var(--dark-hub);
+      --ok: var(--dark-ok);
+      --warn: var(--dark-warn);
+      --danger: var(--dark-danger);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--light-bg);
+      color: var(--dark-text);
+      transition: background 0.3s, color 0.3s;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .container { width: 100%; max-width: 1200px; margin: auto; padding: 0.5rem; }
+    @media(min-width:768px) { .container { padding: 1.5rem; } }
+
+    header { text-align: center; margin-bottom: 1rem; position: relative; }
+    h1 {
+      margin: 0; font-size: 2.1rem; font-weight: 700;
+      text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+    }
+    .h1-sigma { color: var(--tube-fill); }
+    .h1-pinzero { color: var(--empty-slot); }
+    .subtitle { margin: 0.3rem 0 0.6rem; opacity: 0.85; }
+
+    #darkModeToggle {
+      position: absolute; top: 0; right: 0; padding: 0.5rem;
+      background: var(--panel-bg); border: 1px solid var(--border-color);
+      border-radius: 50%; cursor: pointer; font-size: 1.2rem; line-height: 1;
+      width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+      transition: background 0.3s, border-color 0.3s;
+    }
+    #darkModeToggle:hover { background: var(--light-bg); }
+
+    .backlink {
+      position: absolute; left: 0; top: 0; display: flex; align-items: center;
+      padding: 0.5rem; font-size: 0.85rem; color: var(--link-color); text-decoration: none;
+    }
+
+    .main { display: flex; flex-direction: column; gap: 1rem; }
+    @media(min-width: 900px) { .main { flex-direction: row; align-items: flex-start; gap: 1.5rem; } }
+
+    .controls, .stage {
+      background: var(--panel-bg); border-radius: 8px; box-shadow: var(--shadow);
+      padding: 1rem; border: 1px solid var(--border-color);
+      transition: background 0.3s, border-color 0.3s;
+    }
+    .controls { flex: 1; min-width: 260px; }
+    @media(min-width: 900px) { .controls { flex: 0 1 330px; } }
+    .stage { flex: 2; display: flex; flex-direction: column; align-items: center; min-width: 0; }
+
+    .form-row { display: flex; gap: 0.8rem; }
+    .form-group { margin-bottom: 0.9rem; flex: 1; }
+    label { display: block; font-weight: 600; margin-bottom: 0.35rem; font-size: 0.95rem; }
+    input[type=number] {
+      width: 100%; padding: 0.55rem; border: 1px solid var(--border-color); border-radius: 4px;
+      background-color: var(--light-bg); color: var(--dark-text);
+      transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+    }
+
+    .rpm-wrap { margin: 0.4rem 0 1rem; }
+    .rpm-head { display: flex; justify-content: space-between; align-items: baseline; }
+    .rpm-val { font-family: var(--font-mono); font-weight: 700; color: var(--primary); }
+    input[type=range] { width: 100%; accent-color: var(--primary); cursor: pointer; }
+
+    .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-top: 0.4rem; }
+    button {
+      padding: 0.7rem 0.5rem; border: none; border-radius: 4px; background: var(--primary);
+      color: var(--button-text); cursor: pointer; font-weight: 600; font-size: 0.95rem;
+      font-family: var(--font-sans); transition: background 0.2s, transform 0.05s;
+    }
+    button:hover { background: var(--primary-dark); }
+    button:active { transform: translateY(1px); }
+    button.wide { grid-column: 1 / -1; }
+    button.spin { background: var(--tube-fill); font-size: 1.05rem; padding: 0.85rem; }
+    button.spin:hover { filter: brightness(1.08); }
+    button.spinning { background: var(--danger); }
+    button.ghost { background: transparent; color: var(--dark-text); border: 1px solid var(--border-color); }
+    button.ghost:hover { background: var(--light-bg); }
+
+    .readout { margin-top: 1rem; }
+    .verdict { font-weight: 700; font-size: 1.05rem; min-height: 1.4em; }
+    .verdict.balanced { color: var(--ok); }
+    .verdict.unbalanced { color: var(--warn); }
+    .verdict.impossible { color: var(--danger); }
+
+    .stat-line { display: flex; justify-content: space-between; font-size: 0.9rem; padding: 0.15rem 0; }
+    .stat-line span:last-child { font-family: var(--font-mono); }
+
+    .meter { margin-top: 0.6rem; }
+    .meter-label { display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 0.2rem; }
+    .meter-track { height: 12px; border-radius: 6px; background: var(--light-bg); border: 1px solid var(--border-color); overflow: hidden; }
+    .meter-fill { height: 100%; width: 0%; border-radius: 6px; transition: width 0.12s linear, background 0.2s; background: var(--ok); }
+
+    .stage-frame { width: 100%; max-width: 460px; }
+    svg { width: 100%; height: auto; display: block; overflow: visible; touch-action: manipulation; }
+
+    .hint { font-size: 0.82rem; opacity: 0.75; text-align: center; margin-top: 0.4rem; }
+
+    .math {
+      font-family: var(--font-mono); background: var(--light-bg); color: var(--dark-text);
+      padding: 0.7rem; border: 1px solid var(--border-color); border-radius: 4px; margin-top: 0.8rem;
+      overflow-x: auto; font-size: 0.82rem; width: 100%; word-break: break-word;
+    }
+
+    details { margin-top: 0.8rem; font-size: 0.88rem; }
+    summary { cursor: pointer; font-weight: 600; }
+    details p { margin-top: 0.5rem; opacity: 0.9; line-height: 1.5; }
+    details code { font-family: var(--font-mono); background: var(--light-bg); padding: 0.05rem 0.25rem; border-radius: 3px; }
+
+    footer { text-align:center; margin-top: auto; padding: 1.5rem 1rem; font-size:0.85rem; color: gray; width: 100%; }
+    footer a { color: var(--link-color); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .meter-fill { transition: none; }
+    }
+  </style>
+  <script data-goatcounter="https://yamir.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <a class="backlink" href="index.html">← Back to solver</a>
+      <h1><span class="h1-sigma">Σ</span><span class="h1-pinzero">pinZero</span></h1>
+      <p class="subtitle">Interactive Centrifuge — load it, spin it, wreck it</p>
+      <button id="darkModeToggle" title="Toggle dark mode">☀️</button>
+    </header>
+
+    <div class="main">
+      <div class="controls">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="nSlots">Slots (n)</label>
+            <input id="nSlots" type="number" value="12" min="2" max="48">
+          </div>
+          <div class="form-group">
+            <label for="kTubes">Tubes (k)</label>
+            <input id="kTubes" type="number" value="5" min="0" max="48">
+          </div>
+        </div>
+
+        <div class="rpm-wrap">
+          <div class="rpm-head">
+            <label for="rpm" style="margin:0;">Speed</label>
+            <span class="rpm-val"><span id="rpmVal">0</span> RPM</span>
+          </div>
+          <input id="rpm" type="range" min="0" max="15000" step="100" value="6000">
+        </div>
+
+        <button id="spinBtn" class="spin wide">▶ Spin</button>
+
+        <div class="btn-grid" style="margin-top:0.6rem;">
+          <button id="balanceBtn">⚖ Auto-Balance</button>
+          <button id="randomBtn">🎲 Random Fill</button>
+          <button id="clearBtn" class="ghost wide">Clear tubes</button>
+        </div>
+
+        <div class="readout">
+          <p id="verdict" class="verdict"></p>
+          <div class="stat-line"><span>Tubes loaded</span><span id="statTubes">0</span></div>
+          <div class="stat-line"><span>Imbalance |Σspin|</span><span id="statImb">0.000</span></div>
+          <div class="stat-line"><span>Rel. centrifugal force</span><span id="statG">0 ×g</span></div>
+
+          <div class="meter">
+            <div class="meter-label"><span>Vibration</span><span id="vibPct">0%</span></div>
+            <div class="meter-track"><div id="vibFill" class="meter-fill"></div></div>
+          </div>
+        </div>
+
+        <div id="math" class="math"></div>
+
+        <details>
+          <summary>How this works (and why it shakes)</summary>
+          <p>
+            Each tube is a unit vector pointing at its slot. The rotor is balanced when those
+            vectors cancel: <code>Σ e^(i·2π·j/n) = 0</code>. The leftover sum is the
+            <em>imbalance</em> — a vector pointing at the "heavy side."
+          </p>
+          <p>
+            When you spin, the heavy side is flung outward by a force that grows with
+            <code>|Σspin| × RPM²</code>. That force sweeps around with the rotor, so the whole
+            machine traces a circle — the wobble you see. Balance it (imbalance → 0) and even
+            at full speed it runs dead smooth.
+          </p>
+          <p>
+            <strong>Auto-Balance</strong> uses prime-factor cycle decomposition to place tubes
+            in a provably balanced pattern (when one exists). If <code>n</code> and <code>k</code>
+            can't be balanced, it says so — that's the math, not a bug.
+          </p>
+        </details>
+      </div>
+
+      <div class="stage">
+        <div class="stage-frame">
+          <svg id="rotor" viewBox="-230 -230 460 460" aria-label="Interactive centrifuge rotor. Tap slots to add or remove tubes."></svg>
+        </div>
+        <p class="hint">Tap any slot to add or remove a tube • drag the speed slider • hit Spin</p>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Part of <a href="index.html">ΣpinZero</a> — the balanced centrifuge toy.
+    Balanced rotors are happy rotors. <br>
+    Code on <a href="https://github.com/YAMIR-1138/SpinZero" target="_blank" rel="noopener">GitHub</a>.
+  </footer>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+    const svg = document.getElementById('rotor');
+    const nInput = document.getElementById('nSlots');
+    const kInput = document.getElementById('kTubes');
+    const rpmSlider = document.getElementById('rpm');
+    const rpmVal = document.getElementById('rpmVal');
+    const spinBtn = document.getElementById('spinBtn');
+    const balanceBtn = document.getElementById('balanceBtn');
+    const randomBtn = document.getElementById('randomBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const verdictEl = document.getElementById('verdict');
+    const statTubes = document.getElementById('statTubes');
+    const statImb = document.getElementById('statImb');
+    const statG = document.getElementById('statG');
+    const vibFill = document.getElementById('vibFill');
+    const vibPct = document.getElementById('vibPct');
+    const mathBox = document.getElementById('math');
+    const body = document.body;
+
+    const EPS = 1e-6;
+    const R = 150;                 // slot ring radius
+    const ROTOR_R = 190;           // disc radius
+    const RPM_MAX = 15000;
+    const ROTOR_RADIUS_CM = 8;     // assumed rotor radius for the g-force readout
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    let n = clampN(+nInput.value);
+    let tubes = new Set();         // occupied slot indices
+    let spinning = false;
+    let phase = 0;                 // current rotor angle (rad)
+    let lastT = 0;
+    let rafId = null;
+
+    // ---------- math helpers ----------
+    function slotAngle(i) { return 2 * Math.PI * i / n - Math.PI / 2; }
+    function imbalance() {
+      let x = 0, y = 0;
+      tubes.forEach(i => { const a = slotAngle(i); x += Math.cos(a); y += Math.sin(a); });
+      return { x, y, mag: Math.hypot(x, y) };
+    }
+    function primeFactorsUnique(m) {
+      const f = new Set(); let x = m, d = 2;
+      while (d * d <= x) { while (x % d === 0) { f.add(d); x /= d; } d++; }
+      if (x > 1) f.add(x);
+      return [...f];
+    }
+    function isPrimeSum(k, primes) {
+      if (k === 0) return true;
+      if (!primes.length) return false;
+      const r = new Array(k + 1).fill(false); r[0] = true;
+      for (let v = 1; v <= k; v++) for (const p of primes) if (v - p >= 0 && r[v - p]) { r[v] = true; break; }
+      return r[k];
+    }
+    function isBalanceable(nn, k) {
+      const primes = primeFactorsUnique(nn);
+      return isPrimeSum(k, primes) && isPrimeSum(nn - k, primes);
+    }
+
+    // Robust, fast balanced-set constructor (verified to match the Sivek/Baker theorem).
+    function findBalanced(nn, k, budgetMs = 400) {
+      if (k <= 0) return [];
+      if (k >= nn) return [...Array(nn).keys()];
+      const primes = primeFactorsUnique(nn).sort((a, b) => a - b);
+      if (!isPrimeSum(k, primes) || !isPrimeSum(nn - k, primes)) return [];
+      const gons = {};
+      primes.forEach(p => {
+        const step = nn / p;
+        gons[p] = Array.from({ length: step }, (_, i) =>
+          Array.from({ length: p }, (_, j) => (i + j * step) % nn));
+      });
+      const decomps = [];
+      (function rec(idx, rem, counts) {
+        if (idx === primes.length) { if (rem === 0) decomps.push(counts.slice()); return; }
+        const p = primes[idx];
+        const maxc = Math.min(Math.floor(rem / p), nn / p);
+        for (let c = 0; c <= maxc; c++) { counts[idx] = c; rec(idx + 1, rem - c * p, counts); }
+        counts[idx] = 0;
+      })(0, k, new Array(primes.length).fill(0));
+      decomps.sort((A, B) => {
+        const ua = A.filter(c => c > 0).length, ub = B.filter(c => c > 0).length;
+        if (ua !== ub) return ua - ub;
+        for (let i = 0; i < A.length; i++) if (A[i] !== B[i]) return B[i] - A[i];
+        return 0;
+      });
+      const t0 = perfNow();
+      for (const counts of decomps) {
+        if (perfNow() - t0 > budgetMs) break;
+        const jobs = [];
+        for (let i = 0; i < primes.length; i++) if (counts[i] > 0) jobs.push({ p: primes[i], m: counts[i] });
+        jobs.sort((a, b) => b.p - a.p);
+        const used = new Uint8Array(nn);
+        const picked = [];
+        if (place(jobs, 0, gons, used, picked, t0, budgetMs)) {
+          const slots = picked.flat();
+          if (slots.length === k && new Set(slots).size === k) return slots;
+        }
+      }
+      return [];
+    }
+    function place(jobs, idx, gons, used, picked, t0, budgetMs) {
+      if (idx === jobs.length) return true;
+      if (perfNow() - t0 > budgetMs) return false;
+      const { p, m } = jobs[idx];
+      const avail = gons[p].filter(g => g.every(s => !used[s]));
+      if (avail.length < m) return false;
+      const combo = []; let tried = 0; const CAP = 20000;
+      function choose(start) {
+        if (perfNow() - t0 > budgetMs) return false;
+        if (combo.length === m) {
+          combo.forEach(g => g.forEach(s => used[s] = 1));
+          picked.push(...combo);
+          if (place(jobs, idx + 1, gons, used, picked, t0, budgetMs)) return true;
+          for (let c = 0; c < m; c++) picked.pop();
+          combo.forEach(g => g.forEach(s => used[s] = 0));
+          return false;
+        }
+        for (let i = start; i <= avail.length - (m - combo.length); i++) {
+          if (++tried > CAP) return false;
+          combo.push(avail[i]);
+          if (choose(i + 1)) return true;
+          combo.pop();
+        }
+        return false;
+      }
+      return choose(0);
+    }
+    // perf.now() without relying on Date.now (kept simple + monotonic)
+    let _perfBase = (typeof performance !== 'undefined' && performance.now) ? null : 0;
+    function perfNow() {
+      if (typeof performance !== 'undefined' && performance.now) return performance.now();
+      return (_perfBase += 1); // fallback: count iterations
+    }
+
+    function clampN(v) { return Math.max(2, Math.min(48, Math.round(v || 2))); }
+
+    // ---------- rendering ----------
+    const rotorG = document.createElementNS(SVG_NS, 'g');
+    svg.appendChild(rotorG);
+
+    function buildRotor() {
+      rotorG.innerHTML = '';
+
+      // disc
+      const disc = document.createElementNS(SVG_NS, 'circle');
+      disc.setAttribute('r', ROTOR_R);
+      disc.setAttribute('cx', 0); disc.setAttribute('cy', 0);
+      disc.setAttribute('fill', 'var(--disc)');
+      disc.setAttribute('stroke', 'var(--disc-edge)');
+      disc.setAttribute('stroke-width', 4);
+      rotorG.appendChild(disc);
+
+      // subtle spoke ring
+      const ring = document.createElementNS(SVG_NS, 'circle');
+      ring.setAttribute('r', R);
+      ring.setAttribute('cx', 0); ring.setAttribute('cy', 0);
+      ring.setAttribute('fill', 'none');
+      ring.setAttribute('stroke', 'var(--disc-edge)');
+      ring.setAttribute('stroke-width', 1);
+      ring.setAttribute('opacity', 0.5);
+      rotorG.appendChild(ring);
+
+      // imbalance arrow (rotor frame) — drawn before slots so slots sit on top
+      const arrow = document.createElementNS(SVG_NS, 'line');
+      arrow.setAttribute('id', 'imbArrow');
+      arrow.setAttribute('x1', 0); arrow.setAttribute('y1', 0);
+      arrow.setAttribute('x2', 0); arrow.setAttribute('y2', 0);
+      arrow.setAttribute('stroke', 'var(--danger)');
+      arrow.setAttribute('stroke-width', 4);
+      arrow.setAttribute('stroke-linecap', 'round');
+      rotorG.appendChild(arrow);
+
+      const showLabels = n <= 30;
+      const slotR = n > 32 ? 7 : n > 24 ? 8 : 10;
+      for (let i = 0; i < n; i++) {
+        const a = slotAngle(i);
+        const x = R * Math.cos(a), y = R * Math.sin(a);
+
+        // vector line from hub to loaded tube
+        const vec = document.createElementNS(SVG_NS, 'line');
+        vec.setAttribute('class', 'tubeVec');
+        vec.dataset.i = i;
+        vec.setAttribute('x1', 0); vec.setAttribute('y1', 0);
+        vec.setAttribute('x2', x); vec.setAttribute('y2', y);
+        vec.setAttribute('stroke', 'var(--vector)');
+        vec.setAttribute('stroke-width', 2.5);
+        vec.setAttribute('opacity', tubes.has(i) ? 0.55 : 0);
+        rotorG.appendChild(vec);
+
+        // slot well / tube
+        const dot = document.createElementNS(SVG_NS, 'circle');
+        dot.setAttribute('class', 'slot');
+        dot.dataset.i = i;
+        dot.setAttribute('cx', x); dot.setAttribute('cy', y);
+        dot.setAttribute('r', slotR);
+        dot.setAttribute('stroke', 'var(--empty-slot)');
+        dot.setAttribute('stroke-width', 2);
+        dot.setAttribute('fill', tubes.has(i) ? 'var(--tube-fill)' : 'var(--panel-bg)');
+        rotorG.appendChild(dot);
+
+        if (showLabels) {
+          const lbl = document.createElementNS(SVG_NS, 'text');
+          const lr = R + 20;
+          lbl.setAttribute('x', lr * Math.cos(a));
+          lbl.setAttribute('y', lr * Math.sin(a));
+          lbl.setAttribute('font-size', 11);
+          lbl.setAttribute('text-anchor', 'middle');
+          lbl.setAttribute('dominant-baseline', 'middle');
+          lbl.setAttribute('fill', 'var(--dark-text)');
+          lbl.setAttribute('font-family', 'var(--font-mono)');
+          lbl.textContent = i + 1;
+          rotorG.appendChild(lbl);
+        }
+      }
+
+      // hub on top
+      const hub = document.createElementNS(SVG_NS, 'circle');
+      hub.setAttribute('r', 16);
+      hub.setAttribute('cx', 0); hub.setAttribute('cy', 0);
+      hub.setAttribute('fill', 'var(--hub)');
+      hub.setAttribute('stroke', 'var(--disc-edge)');
+      hub.setAttribute('stroke-width', 3);
+      rotorG.appendChild(hub);
+
+      refreshTubes();
+    }
+
+    function refreshTubes() {
+      rotorG.querySelectorAll('.slot').forEach(dot => {
+        const i = +dot.dataset.i;
+        dot.setAttribute('fill', tubes.has(i) ? 'var(--tube-fill)' : 'var(--panel-bg)');
+      });
+      rotorG.querySelectorAll('.tubeVec').forEach(v => {
+        v.setAttribute('opacity', tubes.has(+v.dataset.i) ? 0.55 : 0);
+      });
+      const imb = imbalance();
+      const arrow = rotorG.querySelector('#imbArrow');
+      if (arrow) {
+        if (imb.mag > EPS) {
+          const ang = Math.atan2(imb.y, imb.x);
+          const len = Math.min(R * 0.9, 22 + imb.mag * 14);
+          arrow.setAttribute('x2', len * Math.cos(ang));
+          arrow.setAttribute('y2', len * Math.sin(ang));
+          arrow.setAttribute('opacity', 1);
+        } else {
+          arrow.setAttribute('opacity', 0);
+        }
+      }
+    }
+
+    // ---------- readouts ----------
+    function currentRpm() { return +rpmSlider.value; }
+
+    function updateReadouts() {
+      const k = tubes.size;
+      const imb = imbalance();
+      const rpm = currentRpm();
+
+      statTubes.textContent = k;
+      statImb.textContent = imb.mag.toFixed(3);
+
+      // relative centrifugal force (RCF) at the slot ring, purely for flavor/education
+      const rcf = 1.118e-5 * ROTOR_RADIUS_CM * rpm * rpm; // × g
+      statG.textContent = (rcf >= 1000 ? Math.round(rcf).toLocaleString() : rcf.toFixed(0)) + ' ×g';
+
+      // verdict
+      verdictEl.classList.remove('balanced', 'unbalanced', 'impossible');
+      if (k === 0) {
+        verdictEl.textContent = 'Empty rotor — load some tubes';
+      } else if (imb.mag < EPS) {
+        verdictEl.textContent = 'Balanced ✅  Σspin = 0';
+        verdictEl.classList.add('balanced');
+      } else {
+        verdictEl.textContent = `Unbalanced ❌  |Σspin| = ${imb.mag.toFixed(3)}`;
+        verdictEl.classList.add('unbalanced');
+      }
+
+      // vibration meter: driven by imbalance × (rpm fraction)²
+      const rpmFrac = rpm / RPM_MAX;
+      const vib = Math.min(1, (imb.mag / Math.max(1, k)) * rpmFrac * rpmFrac * 1.6);
+      const pct = Math.round(vib * 100);
+      vibFill.style.width = pct + '%';
+      vibPct.textContent = pct + '%';
+      let color = 'var(--ok)';
+      if (pct > 66) color = 'var(--danger)';
+      else if (pct > 25) color = 'var(--warn)';
+      vibFill.style.background = color;
+
+      // math line
+      const arr = [...tubes].sort((a, b) => a - b);
+      const terms = arr.length ? arr.map(i => `e^(i·2π·${i}/${n})`).join(' + ') : '0';
+      mathBox.textContent = `Σ = ${terms}  =  ${imb.x.toFixed(3)} ${imb.y >= 0 ? '+' : '−'} ${Math.abs(imb.y).toFixed(3)}i`;
+
+      return { imb, rpm };
+    }
+
+    // ---------- animation ----------
+    function frame(t) {
+      if (!lastT) lastT = t;
+      const dt = Math.min(0.05, (t - lastT) / 1000);
+      lastT = t;
+
+      const rpm = currentRpm();
+      const omega = rpm * 2 * Math.PI / 60; // rad/s
+      phase += omega * dt;
+
+      const imb = imbalance();
+      // wobble radius grows with imbalance and the square of speed fraction
+      const rpmFrac = rpm / RPM_MAX;
+      const maxShake = reduceMotion ? 6 : 26;
+      let A = imb.mag * rpmFrac * rpmFrac * (maxShake / 3);
+      A = Math.min(A, maxShake);
+
+      // heavy side (lab frame) = rotor-frame imbalance angle + current phase
+      const beta = imb.mag > EPS ? Math.atan2(imb.y, imb.x) : 0;
+      let dx = A * Math.cos(beta + phase);
+      let dy = A * Math.sin(beta + phase);
+
+      // extra chaotic jitter when things get violent
+      if (!reduceMotion && A > 12) {
+        const j = (A - 12) * 0.35;
+        dx += (pseudoJitter(phase * 7.1) ) * j;
+        dy += (pseudoJitter(phase * 5.3 + 2.0)) * j;
+      }
+
+      const deg = phase * 180 / Math.PI;
+      rotorG.setAttribute('transform', `translate(${dx.toFixed(2)} ${dy.toFixed(2)}) rotate(${deg.toFixed(2)})`);
+
+      if (spinning) rafId = requestAnimationFrame(frame);
+    }
+
+    // deterministic "jitter" so we avoid Math.random in the render loop
+    function pseudoJitter(x) {
+      const s = Math.sin(x * 12.9898) * 43758.5453;
+      return (s - Math.floor(s)) * 2 - 1; // ~[-1,1]
+    }
+
+    function startSpin() {
+      if (spinning) return;
+      spinning = true;
+      spinBtn.textContent = '■ Stop';
+      spinBtn.classList.add('spinning');
+      lastT = 0;
+      rafId = requestAnimationFrame(frame);
+    }
+    function stopSpin() {
+      spinning = false;
+      spinBtn.textContent = '▶ Spin';
+      spinBtn.classList.remove('spinning');
+      if (rafId) cancelAnimationFrame(rafId);
+      // ease rotor back to a resting, centered position
+      phase = 0;
+      rotorG.setAttribute('transform', 'translate(0 0) rotate(0)');
+    }
+
+    // ---------- interaction ----------
+    function localPoint(evt) {
+      const pt = svg.createSVGPoint();
+      const src = evt.touches ? evt.touches[0] : evt;
+      pt.x = src.clientX; pt.y = src.clientY;
+      const ctm = rotorG.getScreenCTM();
+      if (!ctm) return null;
+      return pt.matrixTransform(ctm.inverse());
+    }
+    function nearestSlot(p) {
+      let best = -1, bestD = Infinity;
+      for (let i = 0; i < n; i++) {
+        const a = slotAngle(i);
+        const dx = p.x - R * Math.cos(a), dy = p.y - R * Math.sin(a);
+        const d = dx * dx + dy * dy;
+        if (d < bestD) { bestD = d; best = i; }
+      }
+      return Math.sqrt(bestD) <= 22 ? best : -1;
+    }
+    function toggleSlot(i) {
+      if (i < 0) return;
+      if (tubes.has(i)) tubes.delete(i); else tubes.add(i);
+      kInput.value = tubes.size;
+      refreshTubes();
+      updateReadouts();
+    }
+    svg.addEventListener('pointerdown', (e) => {
+      const p = localPoint(e);
+      if (p) toggleSlot(nearestSlot(p));
+    });
+
+    // ---------- controls ----------
+    function setN(newN) {
+      newN = clampN(newN);
+      if (newN === n) return;
+      n = newN;
+      nInput.value = n;
+      // drop any tubes that no longer fit
+      tubes = new Set([...tubes].filter(i => i < n));
+      kInput.value = tubes.size;
+      buildRotor();
+      updateReadouts();
+    }
+
+    nInput.addEventListener('change', () => setN(+nInput.value));
+    kInput.addEventListener('change', () => {
+      let k = Math.max(0, Math.min(n, Math.round(+kInput.value || 0)));
+      kInput.value = k;
+    });
+
+    rpmSlider.addEventListener('input', () => {
+      rpmVal.textContent = (+rpmSlider.value).toLocaleString();
+      updateReadouts();
+    });
+
+    balanceBtn.addEventListener('click', () => {
+      let k = Math.max(0, Math.min(n, Math.round(+kInput.value || 0)));
+      if (k === 0) k = tubes.size || 0;
+      if (k === 0) { flash(verdictEl); return; }
+      const sol = findBalanced(n, k);
+      if (sol.length === k) {
+        tubes = new Set(sol);
+        kInput.value = k;
+        refreshTubes();
+        updateReadouts();
+      } else {
+        tubes = new Set();
+        kInput.value = k;
+        refreshTubes();
+        updateReadouts();
+        verdictEl.textContent = `Can't balance k=${k} in n=${n} — no arrangement exists`;
+        verdictEl.classList.remove('balanced', 'unbalanced');
+        verdictEl.classList.add('impossible');
+      }
+    });
+
+    randomBtn.addEventListener('click', () => {
+      let k = Math.max(0, Math.min(n, Math.round(+kInput.value || 0)));
+      if (k === 0) k = Math.min(n, 5);
+      const idx = [...Array(n).keys()];
+      for (let i = idx.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [idx[i], idx[j]] = [idx[j], idx[i]];
+      }
+      tubes = new Set(idx.slice(0, k));
+      kInput.value = k;
+      refreshTubes();
+      updateReadouts();
+    });
+
+    clearBtn.addEventListener('click', () => {
+      tubes = new Set();
+      kInput.value = 0;
+      refreshTubes();
+      updateReadouts();
+    });
+
+    spinBtn.addEventListener('click', () => spinning ? stopSpin() : startSpin());
+
+    function flash(el) {
+      el.animate([{ opacity: 1 }, { opacity: 0.3 }, { opacity: 1 }], { duration: 300 });
+    }
+
+    // ---------- dark mode (shared with main app) ----------
+    const toggleButton = document.getElementById('darkModeToggle');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    function setDarkMode(isDark) {
+      if (isDark) { body.classList.add('dark-mode'); toggleButton.textContent = '🌙'; localStorage.setItem('theme', 'dark'); }
+      else { body.classList.remove('dark-mode'); toggleButton.textContent = '☀️'; localStorage.setItem('theme', 'light'); }
+    }
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) setDarkMode(savedTheme === 'dark'); else setDarkMode(prefersDark.matches);
+    toggleButton.addEventListener('click', () => setDarkMode(!body.classList.contains('dark-mode')));
+    prefersDark.addEventListener('change', (e) => { if (!localStorage.getItem('theme')) setDarkMode(e.matches); });
+
+    // ---------- boot ----------
+    rpmVal.textContent = (+rpmSlider.value).toLocaleString();
+    buildRotor();
+    // seed with a pleasant balanced example
+    const seed = findBalanced(n, +kInput.value || 5);
+    if (seed.length) tubes = new Set(seed);
+    refreshTubes();
+    updateReadouts();
+  });
+  </script>
+</body>
+</html>

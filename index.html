@@ -302,6 +302,7 @@
     <header>
       <h1><span class="h1-sigma">Σ</span><span class="h1-pinzero">pinZero</span></h1>
       <p class="subtitle">Centrifuge Tube Balancer</p>
+      <p style="margin:-0.4rem 0 1rem;"><a href="centrifuge.html" style="color: var(--link-color); font-weight:700; text-decoration:none;">🌀 Try the interactive centrifuge — load it, spin it, watch it wobble →</a></p>
       <a href="https://github.com/YAMIR-1138/SpinZero" target="_blank" rel="noopener" style="position: absolute; left: 0; top: 0; display: flex; align-items: center; padding: 0.5rem; font-size: 0.85rem; color: var(--link-color);">
         <svg height="24" width="24" viewBox="0 0 16 16" version="1.1" aria-hidden="true">
           <path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" fill="currentColor"></path>
@@ -670,73 +671,97 @@
         }
       }
 
-      // Select cycles to create a balanced arrangement
-      function selectCycles(n, k) {
-        // Get prime factorization of n
-        const factors = primeFactorization(n);
-        const uniquePrimes = [...new Set(factors)];
-        // For each prime, how many cycles of that length are available?
-        const maxCycles = {};
-        uniquePrimes.forEach(p => { maxCycles[p] = n / p; });
+      // Can `target` be written as a non-negative integer combination of `primes`?
+      // (Sivek/Baker: a rotor with n slots can balance k tubes iff both k and n-k
+      //  are expressible as sums of the prime factors of n.)
+      function isPrimeSum(target, primes) {
+        if (target === 0) return true;
+        if (!primes.length) return false;
+        const reach = new Array(target + 1).fill(false);
+        reach[0] = true;
+        for (let v = 1; v <= target; v++)
+          for (const p of primes)
+            if (v - p >= 0 && reach[v - p]) { reach[v] = true; break; }
+        return reach[target];
+      }
 
-        // Generate all possible cycles for each unique prime
+      // Select disjoint prime-length cycles whose union is a balanced arrangement.
+      // The n/p cycles of a given prime p partition all n slots (they are the cosets
+      // of the order-p rotation subgroup), so same-prime cycles never overlap — we
+      // only backtrack over cross-prime conflicts. Decompositions are tried in a
+      // "concentrated-first" order (fewest distinct primes, then more of the smaller
+      // primes) so easy solutions are found instantly instead of timing out.
+      function selectCycles(n, k) {
+        const uniquePrimes = [...new Set(primeFactorization(n))].sort((a, b) => a - b);
+        if (k <= 0 || k > n) return [];
+        // Gate on the theorem: bail immediately when no balanced arrangement exists.
+        if (!isPrimeSum(k, uniquePrimes) || !isPrimeSum(n - k, uniquePrimes)) return [];
+        if (k === n) return [...Array(n).keys()];
+
+        const maxCycles = {};
         const cyclesByPrime = {};
         uniquePrimes.forEach(p => {
           const step = n / p;
-          const cycles = Array.from({length: step}, (_, i) =>
-            Array.from({length: p}, (_, j) => (i + j*step) % n)
-          );
-          cyclesByPrime[p] = cycles;
+          maxCycles[p] = step;
+          cyclesByPrime[p] = Array.from({ length: step }, (_, i) =>
+            Array.from({ length: p }, (_, j) => (i + j * step) % n));
         });
 
-        // Timeout logic to prevent infinite search
+        // Collect and order the prime decompositions of k.
+        const decomps = [];
+        for (const d of allDecompositions(k, uniquePrimes, maxCycles)) {
+          if (uniquePrimes.every(p => (d[p] || 0) === 0)) continue;
+          decomps.push(uniquePrimes.map(p => d[p] || 0));
+        }
+        decomps.sort((A, B) => {
+          const ua = A.filter(c => c > 0).length, ub = B.filter(c => c > 0).length;
+          if (ua !== ub) return ua - ub;                       // fewer distinct primes first
+          for (let i = 0; i < A.length; i++) if (A[i] !== B[i]) return B[i] - A[i]; // more of the smaller prime
+          return 0;
+        });
+
         const startTime = Date.now();
         const TIMEOUT_MS = 2000;
 
-        // Try all possible decompositions of k as a sum of the available primes
-        for (const decomp of allDecompositions(k, uniquePrimes, maxCycles)) {
-          // Timeout check
-          if (Date.now() - startTime > TIMEOUT_MS) return [];
-          // Skip decompositions that use zero cycles for all primes
-          if (Object.values(decomp).every(cnt => cnt === 0)) continue;
-          // Recursive backtracking to pick cycles of each length, ensuring disjointness
-          function backtrack(primeList, idx, chosen, usedSlots) {
-            if (Date.now() - startTime > TIMEOUT_MS) return null;
-            if (idx === primeList.length) {
-              // Flatten chosen cycles
-              const slots = chosen.flat();
-              if (slots.length === k) return slots;
-              return null;
+        // Place the cycles for each prime; largest (most constrained) prime first.
+        function place(jobs, idx, used, picked) {
+          if (idx === jobs.length) return true;
+          if (Date.now() - startTime > TIMEOUT_MS) return false;
+          const { p, m } = jobs[idx];
+          const avail = cyclesByPrime[p].filter(cyc => cyc.every(s => !used.has(s)));
+          if (avail.length < m) return false;
+          const combo = []; let tried = 0; const CAP = 20000;
+          function choose(start) {
+            if (Date.now() - startTime > TIMEOUT_MS) return false;
+            if (combo.length === m) {
+              combo.forEach(cyc => cyc.forEach(s => used.add(s)));
+              combo.forEach(cyc => picked.push(cyc));
+              if (place(jobs, idx + 1, used, picked)) return true;
+              for (let c = 0; c < m; c++) picked.pop();
+              combo.forEach(cyc => cyc.forEach(s => used.delete(s)));
+              return false;
             }
-            const p = parseInt(primeList[idx]);
-            const cycles = cyclesByPrime[p];
-            const m = decomp[p];
-            // Try all combinations of m cycles from cycles (without overlap)
-            function* combinations(arr, m, start = 0, pick = []) {
-              if (pick.length === m) { yield pick.slice(); return; }
-              for (let i = start; i <= arr.length - (m - pick.length); i++) {
-                pick.push(arr[i]);
-                yield* combinations(arr, m, i + 1, pick);
-                pick.pop();
-              }
+            for (let i = start; i <= avail.length - (m - combo.length); i++) {
+              if (++tried > CAP) return false;
+              combo.push(avail[i]);
+              if (choose(i + 1)) return true;
+              combo.pop();
             }
-            for (const combo of combinations(cycles, m)) {
-              // Timeout check
-              if (Date.now() - startTime > TIMEOUT_MS) return null;
-              // Check for overlap
-              const flat = combo.flat();
-              const overlap = flat.some(slot => usedSlots.has(slot));
-              if (overlap) continue;
-              // Add these slots and recurse
-              combo.forEach(cyc => cyc.forEach(slot => usedSlots.add(slot)));
-              const result = backtrack(primeList, idx + 1, chosen.concat(combo), usedSlots);
-              combo.forEach(cyc => cyc.forEach(slot => usedSlots.delete(slot)));
-              if (result) return result;
-            }
-            return null;
+            return false;
           }
-          const result = backtrack(uniquePrimes, 0, [], new Set());
-          if (result) return result;
+          return choose(0);
+        }
+
+        for (const counts of decomps) {
+          if (Date.now() - startTime > TIMEOUT_MS) return [];
+          const jobs = [];
+          uniquePrimes.forEach((p, i) => { if (counts[i] > 0) jobs.push({ p, m: counts[i] }); });
+          jobs.sort((a, b) => b.p - a.p);
+          const used = new Set(), picked = [];
+          if (place(jobs, 0, used, picked)) {
+            const slots = picked.flat();
+            if (slots.length === k) return slots;
+          }
         }
         return [];
       }
