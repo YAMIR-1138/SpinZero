@@ -2,7 +2,7 @@
 
 **ΣpinZero** is a web app for balancing centrifuge rotors using number theory and complex roots of unity.
 
-Enter the number of slots and tubes, choose a mode, and the app visualizes whether your configuration is balanced (Σspin = 0) — or dangerously chaotic.
+Enter the number of slots and tubes, choose a mode, and the app visualizes whether your configuration is balanced (Σspin = 0), or dangerously chaotic.
 
 There's also an **[interactive centrifuge](centrifuge.html)**: tap slots to load tubes, set the RPM, and hit **Spin**. A balanced rotor stays centered; an unbalanced one wobbles, and the wobble grows with `|Σspin| × RPM²`.
 
@@ -10,7 +10,7 @@ There's also an **[interactive centrifuge](centrifuge.html)**: tap slots to load
 
 ### How it works
 
-For **rotors with up to 24 slots**, ΣpinZero **brute-forces all possible configurations** to find truly balanced ones. This might take a few seconds — especially for larger values of `n` and `k`.
+For **rotors with up to 24 slots**, ΣpinZero **brute-forces all possible configurations** to find truly balanced ones. This might take a few seconds, especially for larger values of `n` and `k`.
 
 For **n > 24**, the app automatically disables computationally intensive modes (Elegant, Cursed, Random) and only allows efficient algorithms to avoid computational explosion.
 ---
