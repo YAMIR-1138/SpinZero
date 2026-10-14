@@ -520,12 +520,12 @@
       const BRUTE_FORCE_MODES = ['elegant', 'cursed', 'evil', 'random'];
       const MODE_INFO = {
         cycle: 'Regular polygons, no overlap. Any rotor size.',
-        elegant: 'Most symmetric layout. Up to 24 slots.',
-        cursed: 'Balanced but irregular. Up to 24 slots.',
-        evil: 'Almost balanced. Don’t spin it. Up to 24 slots.',
+        elegant: 'Most symmetric, evenly spaced layout. Up to 24 slots.',
+        cursed: 'Balanced, with the most irregular spacing. Up to 24 slots.',
+        evil: 'Smallest non-zero imbalance. Unsafe to spin. Up to 24 slots.',
         random: 'Any balanced layout. Up to 24 slots.',
         heuristic: 'Random balanced layout. Any rotor size.',
-        manual: 'Place tubes yourself.'
+        manual: 'Place tubes yourself; Complete it for me adds the rest.'
       };
 
       // Read and validate n and k
@@ -1154,15 +1154,16 @@
       }
 
       function renderLegend(n, pos, balanced) {
-        let html = `Σ e<sup>2πi(s−1)/n</sup> over loaded slots s<br>
+        let html = `Σ e<sup>2πi(s−1)/n</sup> over loaded slots s (s = slot number, 1…n)<br>
           Balanced when Σ = 0<br><br>
-          ● tube &nbsp; ○ empty<br>
-          <span class="unbalanced">→</span> imbalance &nbsp; ✓ balanced`;
-        if (addedPos.size > 0) html += ` &nbsp; ◌ added`;
+          ● tube &nbsp; ○ empty slot<br>
+          <span class="unbalanced">→</span> net imbalance (direction of pull)<br>
+          ✓ forces cancel`;
+        if (addedPos.size > 0) html += `<br>◌ added by Complete it for me`;
         const marks = markerSlots(n);
-        if (marks.length) html += `<br>· reference marks`;
+        if (marks.length) html += `<br>· reference marks: slots ${marks.join(', ')}`;
         if (modeSel.value === 'cycle' && balanced && pos.length > 0) {
-          html += `<br><br>Built from p-gons, p ∈ {${[...new Set(primeFactorization(n))].join(', ')}}`;
+          html += `<br><br>Built from non-overlapping p-gons, p ∈ {${[...new Set(primeFactorization(n))].join(', ')}} (prime factors of ${n})`;
         }
         legend.innerHTML = html;
       }
@@ -1213,7 +1214,7 @@
         } else if (mode === 'cycle') {
           addedPos.clear();
           const solution = findBalancedArrangementCycles(n, k);
-          if (solution.length > 0) render(solution);
+          if (solution.length > 0) render(solution, { extra: `(prime factors ${[...new Set(primeFactorization(n))].join(', ')})` });
           else render([], { message: balancedExists(n, k) ? 'Nothing found.' : impossibleText(n, k), cls: 'unbalanced' });
         } else {
           addedPos.clear();
@@ -1231,7 +1232,7 @@
 
           if (mode === 'evil') {
             if (pick.length > 0) render(pick, {
-              message: `Evil ☠️ → Σspin ≈ ${sumOf(pick, n).mag.toFixed(6)}`,
+              message: `Evil ☠️ → Σspin ≈ ${sumOf(pick, n).mag.toFixed(6)} (smallest non-zero imbalance)`,
               cls: 'evil', listLabel: 'Don’t load'
             });
             else render([], { message: 'Every layout is balanced.', cls: 'evil' });
@@ -1239,7 +1240,7 @@
             if (pick.length > 0) render(pick);
             else render([], { message: balancedExists(n, k) ? 'Nothing found in time.' : impossibleText(n, k), cls: 'unbalanced' });
           } else if (res.total > 0) {
-            render(pick, { extra: `(${res.total} layouts, ${res.unique} unique)` });
+            render(pick, { extra: `(${res.total} layouts, ${res.unique} unique up to rotation)` });
           } else {
             render([], { message: impossibleText(n, k), cls: 'unbalanced' });
           }
