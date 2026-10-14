@@ -384,23 +384,6 @@
     .legend summary { cursor: pointer; font-family: var(--font-sans); font-weight: 700; }
     .legend[open] summary { margin-bottom: 0.6rem; }
 
-    .about {
-      background: var(--panel-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      box-shadow: var(--shadow);
-      padding: 1.25rem;
-      margin-top: 1.5rem;
-      line-height: 1.6;
-      transition: background 0.3s, border-color 0.3s;
-    }
-    .about h2 { font-size: 1.15rem; margin: 1.25rem 0 0.5rem; }
-    .about h2:first-child { margin-top: 0; }
-    .about p { margin-bottom: 0.75rem; }
-    .about ul { padding-left: 1.25rem; margin-bottom: 0.75rem; }
-    .about li { margin-bottom: 0.35rem; }
-    .about-note { opacity: 0.8; font-size: 0.9rem; }
-
     footer {
         text-align:center;
         margin-top: auto; /* Push footer down */
@@ -467,7 +450,7 @@
             <option value="manual">Manual</option>
           </select>
           <p id="modeDesc" class="mode-desc"></p>
-          <small id="modeHelpText" style="display: none; color: var(--empty-slot); margin-top: 4px;">For n>24, only Cycle Decomposition, Heuristic Random, and Manual modes are available due to computational complexity.</small>
+          <small id="modeHelpText" style="display: none; color: var(--empty-slot); margin-top: 4px;">Some modes are off above 24 slots.</small>
         </div>
         <div class="buttons">
           <button id="runBtn" type="button">Run</button>
@@ -492,46 +475,11 @@
         </svg>
         <div id="mathBox" class="math" hidden></div>
         <details class="legend">
-          <summary>What does this mean?</summary>
+          <summary>Legend</summary>
           <div id="legend"></div>
         </details>
       </div>
     </div>
-
-    <section class="about">
-      <h2>How do you balance a centrifuge with an odd number of tubes?</h2>
-      <p>
-        A centrifuge rotor is balanced when the centre of mass of the loaded tubes sits on the spin axis.
-        Model each of the <em>n</em> slots as a point on the unit circle, e<sup>2πij/n</sup>. A set of
-        <em>k</em> tubes is balanced exactly when those points add up to zero – a <strong>vanishing sum of roots of unity</strong>.
-      </p>
-      <p>
-        Pairs of opposite tubes, equilateral triangles and other regular polygons all cancel out, and so does any
-        combination of them that doesn’t overlap. So an odd count is often fine: 5 tubes in a 12‑slot rotor balance as
-        a triangle plus one opposite pair – but 5 tubes in a 6‑slot rotor never can.
-      </p>
-
-      <h2>When is a balanced arrangement possible?</h2>
-      <p>
-        By the Lam–Leung theorem, <em>k</em> tubes can be balanced in an <em>n</em>-slot rotor if and only if
-        <strong>both <em>k</em> and <em>n − k</em></strong> can be written as sums of prime factors of <em>n</em>.
-        For example, in a 12‑slot rotor (prime factors 2 and 3) every tube count except 1 and 11 can be balanced,
-        while in a 6‑slot rotor 1 and 5 tubes are impossible. ΣpinZero checks this instantly and then builds an arrangement for you.
-      </p>
-
-      <h2>Modes</h2>
-      <ul>
-        <li><strong>Cycle Decomposition</strong> – builds a balanced layout from non-overlapping regular polygons; fast for any rotor size.</li>
-        <li><strong>Elegant / Cursed / Random</strong> – search every arrangement (rotors up to 24 slots) for the most symmetric, the most chaotic-looking, or any balanced layout.</li>
-        <li><strong>Evil</strong> – the arrangement that is <em>almost</em> balanced: the smallest possible non-zero imbalance.</li>
-        <li><strong>Heuristic Random</strong> – a random balanced layout for large rotors.</li>
-        <li><strong>Manual</strong> – click slots to check your own loading pattern before you hit start, or place the tubes you already have and let <em>Complete it for me</em> add the rest.</li>
-      </ul>
-      <p class="about-note">
-        Always follow your centrifuge manufacturer’s instructions: tubes must also be filled to equal mass,
-        and some rotors have their own loading rules.
-      </p>
-    </section>
   </div>
   <footer>
     Inspired by mathematical insights from <a href="https://www.kurims.kyoto-u.ac.jp/EMIS/journals/INTEGERS/papers/k31/k31.pdf" target="_blank" rel="noopener">Gary Sivek</a> and the <a href="https://mattbaker.blog/2018/06/25/the-balanced-centrifuge-problem/" target="_blank" rel="noopener">Matt Baker blog</a>.
@@ -571,13 +519,13 @@
       const CANONICAL_URL = 'https://yamir-1138.github.io/SpinZero/';
       const BRUTE_FORCE_MODES = ['elegant', 'cursed', 'evil', 'random'];
       const MODE_INFO = {
-        cycle: 'Builds a balanced layout from non-overlapping regular polygons. Fast for any rotor size.',
-        elegant: 'The most symmetric, evenly spaced balanced layout. Rotors up to 24 slots.',
-        cursed: 'Balanced, but with as many different gaps between tubes as possible. Rotors up to 24 slots.',
-        evil: 'Looks balanced, isn’t: the smallest possible non-zero imbalance. Do not spin this. Rotors up to 24 slots.',
-        random: 'Any balanced layout, picked at random from all of them. Rotors up to 24 slots.',
-        heuristic: 'A random balanced layout that also works for large rotors.',
-        manual: 'Click (or Tab + Enter) slots to place your own tubes. “Complete it for me” fills in the rest.'
+        cycle: 'Regular polygons, no overlap. Any rotor size.',
+        elegant: 'Most symmetric layout. Up to 24 slots.',
+        cursed: 'Balanced but irregular. Up to 24 slots.',
+        evil: 'Almost balanced. Don’t spin it. Up to 24 slots.',
+        random: 'Any balanced layout. Up to 24 slots.',
+        heuristic: 'Random balanced layout. Any rotor size.',
+        manual: 'Place tubes yourself.'
       };
 
       // Read and validate n and k
@@ -586,9 +534,9 @@
         const k = Number(kInput.value);
         let error = '', field = null;
         if (!Number.isInteger(n) || n < 2 || n > MAX_N) {
-          error = `Rotor slots must be a whole number from 2 to ${MAX_N}.`; field = nInput;
+          error = `n must be 2–${MAX_N}.`; field = nInput;
         } else if (!Number.isInteger(k) || k < 1 || k > n) {
-          error = `Tubes must be a whole number from 1 to ${n}.`; field = kInput;
+          error = `k must be 1–${n}.`; field = kInput;
         }
         return { n, k, error, field };
       }
@@ -663,7 +611,6 @@
       }
 
       const slotNames = pos => pos.map(i => i + 1).sort((a, b) => a - b).join(', ');
-      const plural = (count, word) => `${count} ${word}${count === 1 ? '' : 's'}`;
 
       // Reference marks (a 6-tube hexagon) for common rotor sizes, as 1-based slots
       function markerSlots(n) {
@@ -1154,7 +1101,7 @@
         let note = '';
         if (manualPos.has(i)) { manualPos.delete(i); addedPos.delete(i); }
         else if (manualPos.size < k) manualPos.add(i);
-        else note = `All ${k} tubes are placed – remove one first, or raise k.`;
+        else note = `All ${k} placed.`;
         manualRender(note);
         updateUrl();
         if (refocus) svg.querySelector(`[data-slot="${i}"]`)?.focus();
@@ -1163,7 +1110,7 @@
       // Explain why no balanced arrangement exists (Lam–Leung condition fails)
       function impossibleText(n, k) {
         const primes = [...new Set(primeFactorization(n))];
-        return `No balanced arrangement exists for n=${n}, k=${k}: both k and n−k must be sums of the prime factors of n (${primes.join(', ')})`;
+        return `Impossible: k and n−k must both be sums of ${primes.join(', ')}.`;
       }
 
       const fmt = v => (Math.abs(v) < 5e-4 ? 0 : v).toFixed(3);
@@ -1207,26 +1154,15 @@
       }
 
       function renderLegend(n, pos, balanced) {
-        let html = `<strong>The equation</strong><br>
-          Σ – sum over loaded tubes<br>
-          e<sup>iθ</sup> – unit vector pointing at a tube, θ = 2π·(s−1)/n<br>
-          s – slot number, as labelled on the rotor (1…n)<br>
-          Perfectly balanced (as all things should be) when Σ = 0<br><br>
-          <strong>The picture</strong><br>
-          ● filled circle – tube &nbsp; ○ hollow circle – empty slot<br>
-          dark lines – each tube’s pull on the rotor<br>
-          orange arrow – net imbalance: the direction the rotor is pulled (tiny imbalances are drawn enlarged)<br>
-          ✓ in the centre – all forces cancel`;
-        if (addedPos.size > 0) html += `<br>dashed ring – tube added by “Complete it for me”`;
+        let html = `Σ e<sup>2πi(s−1)/n</sup> over loaded slots s<br>
+          Balanced when Σ = 0<br><br>
+          ● tube &nbsp; ○ empty<br>
+          <span class="unbalanced">→</span> imbalance &nbsp; ✓ balanced`;
+        if (addedPos.size > 0) html += ` &nbsp; ◌ added`;
         const marks = markerSlots(n);
-        if (marks.length) html += `<br>small dots outside the rim – reference marks at slots ${marks.join(', ')} (a 6-tube hexagon)`;
+        if (marks.length) html += `<br>· reference marks`;
         if (modeSel.value === 'cycle' && balanced && pos.length > 0) {
-          const uniqueFactors = [...new Set(primeFactorization(n))];
-          html += `<br><br><strong>Cycle decomposition</strong><br>
-            The layout is built from non-overlapping cycles (regular polygons):<br>
-            &nbsp;&nbsp;• each cycle has length p, where p is a prime factor of n<br>
-            &nbsp;&nbsp;• n = ${n} has prime factors: ${uniqueFactors.join(', ')}<br>
-            &nbsp;&nbsp;• k = ${pos.length} is written as a sum of these factors`;
+          html += `<br><br>Built from p-gons, p ∈ {${[...new Set(primeFactorization(n))].join(', ')}}`;
         }
         legend.innerHTML = html;
       }
@@ -1235,8 +1171,8 @@
         const { k } = readInputs();
         const pos = [...manualPos];
         render(pos, {
-          message: pos.length ? undefined : `Click the slots to place up to ${k} tubes.`,
-          extra: pos.length ? `(${pos.length} / ${k} placed)` : '',
+          message: pos.length ? undefined : 'Tap slots to place tubes.',
+          extra: pos.length ? `(${pos.length}/${k})` : '',
           note,
           listLabel: addedPos.size ? 'Load slots' : 'Your tubes'
         });
@@ -1245,30 +1181,24 @@
       function showIdle() {
         addedPos.clear();
         if (modeSel.value === 'manual') manualRender();
-        else render([], { message: 'Choose n and k, then press Run.' });
+        else render([], { message: 'Press Run.' });
       }
 
       function completeManual() {
         const { n, k } = readInputs();
         const fixed = [...manualPos];
         if (fixed.length === k) {
-          manualRender(sumOf(fixed, n).mag < EPS
-            ? 'Already balanced – nothing to add.'
-            : `All ${k} tubes are placed. Remove some (or raise k) so I can complete it.`);
+          manualRender(sumOf(fixed, n).mag < EPS ? 'Already balanced.' : 'All placed. Remove some first.');
           return;
         }
         const sol = completeArrangement(n, k, fixed);
         if (sol.length === 0) {
-          manualRender(balancedExists(n, k)
-            ? `Couldn’t find a balanced layout of ${k} tubes that keeps your tubes where they are. Try moving one.`
-            : impossibleText(n, k));
+          manualRender(balancedExists(n, k) ? 'Can’t complete with these slots. Move one.' : impossibleText(n, k));
           return;
         }
         addedPos = new Set(sol.filter(i => !manualPos.has(i)));
         manualPos = new Set(sol);
-        manualRender(fixed.length
-          ? `Added ${addedPos.size === 1 ? 'slot' : 'slots'} ${slotNames([...addedPos])} to balance your ${plural(fixed.length, 'tube')}.`
-          : `Placed all ${k} tubes for you.`);
+        manualRender(fixed.length ? `Added ${slotNames([...addedPos])}.` : '');
       }
 
       async function run({ scroll = false } = {}) {
@@ -1282,17 +1212,13 @@
           completeManual();
         } else if (mode === 'cycle') {
           addedPos.clear();
-          const uniqueFactors = [...new Set(primeFactorization(n))];
           const solution = findBalancedArrangementCycles(n, k);
-          if (solution.length > 0) render(solution, { extra: `(cycle decomposition, prime factors ${uniqueFactors.join(', ')})` });
-          else render([], {
-            message: balancedExists(n, k) ? `No balanced arrangement found using cycle decomposition (prime factors: ${uniqueFactors.join(', ')})` : impossibleText(n, k),
-            cls: 'unbalanced'
-          });
+          if (solution.length > 0) render(solution);
+          else render([], { message: balancedExists(n, k) ? 'Nothing found.' : impossibleText(n, k), cls: 'unbalanced' });
         } else {
           addedPos.clear();
           setBusy(true);
-          render([], { message: 'Calculating arrangements…' });
+          render([], { message: 'Calculating…' });
           let res;
           if (mode === 'heuristic') {
             res = { pick: await heuristicSearch(n, k) };
@@ -1305,15 +1231,15 @@
 
           if (mode === 'evil') {
             if (pick.length > 0) render(pick, {
-              message: `Evil ☠️ → Σspin ≈ ${sumOf(pick, n).mag.toFixed(6)} (smallest possible non-zero imbalance)`,
-              cls: 'evil', listLabel: 'Evil layout (do NOT use)'
+              message: `Evil ☠️ → Σspin ≈ ${sumOf(pick, n).mag.toFixed(6)}`,
+              cls: 'evil', listLabel: 'Don’t load'
             });
-            else render([], { message: 'No evil arrangement possible: every arrangement is balanced', cls: 'evil' });
+            else render([], { message: 'Every layout is balanced.', cls: 'evil' });
           } else if (mode === 'heuristic') {
-            if (pick.length > 0) render(pick, { extra: '(random search)' });
-            else render([], { message: balancedExists(n, k) ? 'No balanced arrangement found within time limit' : impossibleText(n, k), cls: 'unbalanced' });
+            if (pick.length > 0) render(pick);
+            else render([], { message: balancedExists(n, k) ? 'Nothing found in time.' : impossibleText(n, k), cls: 'unbalanced' });
           } else if (res.total > 0) {
-            render(pick, { extra: `(${plural(res.total, 'balanced layout')}, ${res.unique} unique up to rotation)` });
+            render(pick, { extra: `(${res.total} layouts, ${res.unique} unique)` });
           } else {
             render([], { message: impossibleText(n, k), cls: 'unbalanced' });
           }
@@ -1364,7 +1290,7 @@
           manualPos = new Set(slots);
           manualRender();
         } else if (['random', 'heuristic'].includes(modeSel.value) && slots.length === k) {
-          render(slots, { extra: '(shared layout)' });
+          render(slots);
         } else {
           run();
         }
