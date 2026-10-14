@@ -3,7 +3,46 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Centrifuge Tube Balancer</title>
+  <title>ΣpinZero – Centrifuge Balance Calculator for Any Number of Tubes</title>
+  <meta name="description" content="Free centrifuge balance calculator: enter rotor slots (n) and tubes (k) to find a balanced arrangement, including odd tube counts like 5 in 12 or 7 in 30. Based on vanishing sums of roots of unity.">
+  <meta name="keywords" content="centrifuge balance calculator, how to balance a centrifuge, centrifuge tube arrangement, odd number of tubes centrifuge, balanced centrifuge problem, roots of unity, lab tools">
+  <meta name="author" content="Yam Amir">
+  <link rel="canonical" href="https://yamir-1138.github.io/SpinZero/">
+  <meta name="theme-color" content="#2c7a7b">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+
+  <!-- Open Graph / social previews -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ΣpinZero">
+  <meta property="og:title" content="ΣpinZero – Centrifuge Balance Calculator">
+  <meta property="og:description" content="Find a balanced centrifuge arrangement for any number of tubes and rotor slots – even odd counts. Visualized with roots of unity.">
+  <meta property="og:url" content="https://yamir-1138.github.io/SpinZero/">
+  <meta property="og:image" content="https://yamir-1138.github.io/SpinZero/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="A 24-slot centrifuge rotor with a balanced arrangement of tubes and their force vectors">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="ΣpinZero – Centrifuge Balance Calculator">
+  <meta name="twitter:description" content="Find a balanced centrifuge arrangement for any number of tubes and rotor slots – even odd counts.">
+  <meta name="twitter:image" content="https://yamir-1138.github.io/SpinZero/og-image.png">
+
+  <!-- Structured data so search engines understand this is a free web tool -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "ΣpinZero",
+    "alternateName": "SpinZero Centrifuge Tube Balancer",
+    "url": "https://yamir-1138.github.io/SpinZero/",
+    "description": "Centrifuge balance calculator that finds balanced tube arrangements for any rotor size using vanishing sums of roots of unity.",
+    "applicationCategory": "EducationalApplication",
+    "operatingSystem": "Any (web browser)",
+    "isAccessibleForFree": true,
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "author": { "@type": "Person", "name": "Yam Amir" },
+    "license": "https://opensource.org/licenses/MIT"
+  }
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fira+Code&display=swap" rel="stylesheet">
@@ -277,6 +316,23 @@
     }
      .math { word-break: break-all; } /* Prevent long math overflow */
 
+    .about {
+      background: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 1.25rem;
+      margin-top: 1.5rem;
+      line-height: 1.6;
+      transition: background 0.3s, border-color 0.3s;
+    }
+    .about h2 { font-size: 1.15rem; margin: 1.25rem 0 0.5rem; }
+    .about h2:first-child { margin-top: 0; }
+    .about p { margin-bottom: 0.75rem; }
+    .about ul { padding-left: 1.25rem; margin-bottom: 0.75rem; }
+    .about li { margin-bottom: 0.35rem; }
+    .about-note { opacity: 0.8; font-size: 0.9rem; }
+
     footer {
         text-align:center;
         margin-top: auto; /* Push footer down */
@@ -308,7 +364,7 @@
         </svg>
         <span style="margin-left: 0.5rem;">README</span>
       </a>
-      <button id="darkModeToggle" title="Toggle dark mode">☀️</button> <!-- Placeholder Button -->
+      <button id="darkModeToggle" title="Toggle dark mode" aria-label="Toggle dark mode">☀️</button>
     </header>
     <div class="main">
       <div class="controls">
@@ -337,10 +393,10 @@
           <button id="runBtn">Run</button>
           <button id="clearBtn">Clear</button>
         </div>
-        <p id="result" class="result"></p>
+        <p id="result" class="result" aria-live="polite"></p>
       </div>
       <div class="visual">
-        <svg id="rotorSvg" viewBox="0 0 400 400" width="100%" height="auto">
+        <svg id="rotorSvg" viewBox="0 0 400 400" width="100%" role="img" aria-label="Centrifuge rotor diagram showing loaded tubes and their force vectors">
           <defs>
             <marker id="arrowhead" markerWidth="20" markerHeight="12" refX="0" refY="6" orient="auto" markerUnits="strokeWidth">
               <polygon points="0 0,20 6,0 12" fill="var(--vector)"/>
@@ -351,6 +407,41 @@
         <div id="legend" class="legend"></div>
       </div>
     </div>
+
+    <section class="about">
+      <h2>How do you balance a centrifuge with an odd number of tubes?</h2>
+      <p>
+        A centrifuge rotor is balanced when the centre of mass of the loaded tubes sits on the spin axis.
+        Model each of the <em>n</em> slots as a point on the unit circle, e<sup>2πij/n</sup>. A set of
+        <em>k</em> tubes is balanced exactly when those points add up to zero – a <strong>vanishing sum of roots of unity</strong>.
+      </p>
+      <p>
+        Pairs of opposite tubes, equilateral triangles and other regular polygons all cancel out, and so does any
+        combination of them that doesn’t overlap. So an odd count is often fine: 5 tubes in a 12‑slot rotor balance as
+        a triangle plus one opposite pair – but 5 tubes in a 6‑slot rotor never can.
+      </p>
+
+      <h2>When is a balanced arrangement possible?</h2>
+      <p>
+        By the Lam–Leung theorem, <em>k</em> tubes can be balanced in an <em>n</em>-slot rotor if and only if
+        <strong>both <em>k</em> and <em>n − k</em></strong> can be written as sums of prime factors of <em>n</em>.
+        For example, in a 12‑slot rotor (prime factors 2 and 3) every tube count except 1 and 11 can be balanced,
+        while in a 6‑slot rotor 1 and 5 tubes are impossible. ΣpinZero checks this instantly and then builds an arrangement for you.
+      </p>
+
+      <h2>Modes</h2>
+      <ul>
+        <li><strong>Cycle Decomposition</strong> – builds a balanced layout from non-overlapping regular polygons; fast for any rotor size.</li>
+        <li><strong>Elegant / Cursed / Random</strong> – search every arrangement (rotors up to 24 slots) for the most symmetric, the most chaotic-looking, or any balanced layout.</li>
+        <li><strong>Evil</strong> – the arrangement that is <em>almost</em> balanced: the smallest possible non-zero imbalance.</li>
+        <li><strong>Heuristic Random</strong> – a random balanced layout for large rotors.</li>
+        <li><strong>Manual</strong> – click slots to check your own loading pattern before you hit start.</li>
+      </ul>
+      <p class="about-note">
+        Always follow your centrifuge manufacturer’s instructions: tubes must also be filled to equal mass,
+        and some rotors have their own loading rules.
+      </p>
+    </section>
   </div>
   <footer>
     Inspired by mathematical insights from <a href="https://www.kurims.kyoto-u.ac.jp/EMIS/journals/INTEGERS/papers/k31/k31.pdf" target="_blank" rel="noopener">Gary Sivek</a> and the <a href="https://mattbaker.blog/2018/06/25/the-balanced-centrifuge-problem/" target="_blank" rel="noopener">Matt Baker blog</a>.
@@ -546,10 +637,12 @@
 
       function allBalanced(n, k) {
         const idx = [...Array(n).keys()];
+        const cosT = idx.map(i => Math.cos(2*Math.PI*i/n));
+        const sinT = idx.map(i => Math.sin(2*Math.PI*i/n));
         const out = [];
         for (const c of combos(idx, k)) {
           let sx = 0, sy = 0;
-          c.forEach(i => { sx += Math.cos(2*Math.PI*i/n); sy += Math.sin(2*Math.PI*i/n); });
+          for (const i of c) { sx += cosT[i]; sy += sinT[i]; }
           if (Math.hypot(sx, sy) < EPS) out.push(c);
         }
         return out;
@@ -600,39 +693,22 @@
         return worst || [];
       }
 
-      // Evil arrangement - finds the configuration that's almost balanced but not quite
+      // Evil arrangement - the configuration with the smallest non-zero imbalance.
+      // Evil mode is only offered for n <= 24, so an exhaustive search is affordable.
       function evilArrangement(n, k) {
-        // We need to find an unbalanced arrangement that's close to balanced
-        // We'll generate random configurations and find the one with the smallest non-zero magnitude
-        const trials = 10000; // Number of tries to find an evil arrangement
+        const cosT = Array.from({length: n}, (_, i) => Math.cos(2 * Math.PI * i / n));
+        const sinT = Array.from({length: n}, (_, i) => Math.sin(2 * Math.PI * i / n));
         let bestMag = Infinity;
         let bestArrangement = [];
-        
-        for (let i = 0; i < trials; i++) {
-          // Generate a random arrangement
-          const positions = new Set();
-          while (positions.size < k) {
-            positions.add(Math.floor(Math.random() * n));
-          }
-          const pos = [...positions];
-          
-          // Calculate the sum of vectors
+        for (const c of combos([...Array(n).keys()], k)) {
           let sx = 0, sy = 0;
-          for (const j of pos) {
-            const angle = 2 * Math.PI * j / n;
-            sx += Math.cos(angle);
-            sy += Math.sin(angle);
-          }
-          
+          for (const j of c) { sx += cosT[j]; sy += sinT[j]; }
           const mag = Math.hypot(sx, sy);
-          
-          // Find the arrangement with the smallest non-zero magnitude
-          if (mag > EPS && mag < bestMag) {
+          if (mag > EPS && mag < bestMag - EPS) {
             bestMag = mag;
-            bestArrangement = pos;
+            bestArrangement = c;
           }
         }
-        
         return bestArrangement;
       }
 
@@ -670,162 +746,133 @@
         }
       }
 
-      // Select cycles to create a balanced arrangement
-      function selectCycles(n, k) {
-        // Get prime factorization of n
-        const factors = primeFactorization(n);
-        const uniquePrimes = [...new Set(factors)];
-        // For each prime, how many cycles of that length are available?
+      // Is k a sum of (possibly repeated) primes from the list? (k = 0 counts as yes)
+      function isSumOfPrimes(k, primes) {
+        const ok = Array(k + 1).fill(false);
+        ok[0] = true;
+        for (let i = 1; i <= k; i++) ok[i] = primes.some(p => i >= p && ok[i - p]);
+        return ok[k];
+      }
+
+      // Lam–Leung theorem: k tubes can be balanced in n slots iff both k and n−k
+      // are sums of prime factors of n (the empty slots must balance too)
+      function balancedExists(n, k) {
+        const primes = [...new Set(primeFactorization(n))];
+        return isSumOfPrimes(k, primes) && isSumOfPrimes(n - k, primes);
+      }
+
+      // Select disjoint p-cycles (regular p-gons, p a prime factor of n) totalling k slots
+      function selectCycles(n, k, shuffle = false) {
+        // Largest primes first: their cycles are hardest to fit, while the smallest
+        // prime is placed last where a greedy pick is exact (same-length cycles never overlap)
+        const uniquePrimes = [...new Set(primeFactorization(n))].sort((a, b) => b - a);
         const maxCycles = {};
         uniquePrimes.forEach(p => { maxCycles[p] = n / p; });
 
-        // Generate all possible cycles for each unique prime
+        // All cycles for each prime: {i, i + n/p, i + 2n/p, ...}
         const cyclesByPrime = {};
         uniquePrimes.forEach(p => {
           const step = n / p;
           const cycles = Array.from({length: step}, (_, i) =>
-            Array.from({length: p}, (_, j) => (i + j*step) % n)
+            Array.from({length: p}, (_, j) => i + j*step)
           );
+          if (shuffle) cycles.sort(() => Math.random() - 0.5);
           cyclesByPrime[p] = cycles;
         });
 
-        // Timeout logic to prevent infinite search
+        // Timeout logic to prevent runaway search
         const startTime = Date.now();
         const TIMEOUT_MS = 2000;
 
+        function* combinations(arr, m, start = 0, pick = []) {
+          if (pick.length === m) { yield pick.slice(); return; }
+          for (let i = start; i <= arr.length - (m - pick.length); i++) {
+            pick.push(arr[i]);
+            yield* combinations(arr, m, i + 1, pick);
+            pick.pop();
+          }
+        }
+
+        // Backtrack over primes, choosing decomp[p] cycles of each length without overlap
+        function backtrack(decomp, idx, chosen, usedSlots) {
+          if (Date.now() - startTime > TIMEOUT_MS) return null;
+          if (idx === uniquePrimes.length) return chosen.flat();
+          const p = uniquePrimes[idx];
+          const m = decomp[p];
+          const free = cyclesByPrime[p].filter(cyc => cyc.every(s => !usedSlots.has(s)));
+          if (free.length < m) return null;
+          if (idx === uniquePrimes.length - 1) return chosen.concat(free.slice(0, m)).flat();
+          for (const combo of combinations(free, m)) {
+            if (Date.now() - startTime > TIMEOUT_MS) return null;
+            combo.forEach(cyc => cyc.forEach(s => usedSlots.add(s)));
+            const result = backtrack(decomp, idx + 1, chosen.concat(combo), usedSlots);
+            combo.forEach(cyc => cyc.forEach(s => usedSlots.delete(s)));
+            if (result) return result;
+          }
+          return null;
+        }
+
         // Try all possible decompositions of k as a sum of the available primes
         for (const decomp of allDecompositions(k, uniquePrimes, maxCycles)) {
-          // Timeout check
           if (Date.now() - startTime > TIMEOUT_MS) return [];
-          // Skip decompositions that use zero cycles for all primes
-          if (Object.values(decomp).every(cnt => cnt === 0)) continue;
-          // Recursive backtracking to pick cycles of each length, ensuring disjointness
-          function backtrack(primeList, idx, chosen, usedSlots) {
-            if (Date.now() - startTime > TIMEOUT_MS) return null;
-            if (idx === primeList.length) {
-              // Flatten chosen cycles
-              const slots = chosen.flat();
-              if (slots.length === k) return slots;
-              return null;
-            }
-            const p = parseInt(primeList[idx]);
-            const cycles = cyclesByPrime[p];
-            const m = decomp[p];
-            // Try all combinations of m cycles from cycles (without overlap)
-            function* combinations(arr, m, start = 0, pick = []) {
-              if (pick.length === m) { yield pick.slice(); return; }
-              for (let i = start; i <= arr.length - (m - pick.length); i++) {
-                pick.push(arr[i]);
-                yield* combinations(arr, m, i + 1, pick);
-                pick.pop();
-              }
-            }
-            for (const combo of combinations(cycles, m)) {
-              // Timeout check
-              if (Date.now() - startTime > TIMEOUT_MS) return null;
-              // Check for overlap
-              const flat = combo.flat();
-              const overlap = flat.some(slot => usedSlots.has(slot));
-              if (overlap) continue;
-              // Add these slots and recurse
-              combo.forEach(cyc => cyc.forEach(slot => usedSlots.add(slot)));
-              const result = backtrack(primeList, idx + 1, chosen.concat(combo), usedSlots);
-              combo.forEach(cyc => cyc.forEach(slot => usedSlots.delete(slot)));
-              if (result) return result;
-            }
-            return null;
-          }
-          const result = backtrack(uniquePrimes, 0, [], new Set());
+          const result = backtrack(decomp, 0, [], new Set());
           if (result) return result;
         }
         return [];
       }
-      
+
       // Try to find a balanced arrangement using cycle decomposition
-      function findBalancedArrangementCycles(n, k) {
+      function findBalancedArrangementCycles(n, k, shuffle = false) {
+        if (k === n) return [...Array(n).keys()];
+        if (!balancedExists(n, k)) return [];
         try {
-          const slots = selectCycles(n, k);
-          
+          // The complement of a balanced set is balanced, so solve the smaller side
+          let slots;
+          if (k > n / 2) {
+            const empty = new Set(selectCycles(n, n - k, shuffle));
+            slots = empty.size === n - k ? [...Array(n).keys()].filter(i => !empty.has(i)) : [];
+          } else {
+            slots = selectCycles(n, k, shuffle);
+          }
           // Verify that the arrangement is balanced
           if (slots.length === k) {
             let sx = 0, sy = 0;
             for (const i of slots) {
-              const angle = 2 * Math.PI * i / n;
-              sx += Math.cos(angle);
-              sy += Math.sin(angle);
+              sx += Math.cos(2 * Math.PI * i / n);
+              sy += Math.sin(2 * Math.PI * i / n);
             }
-            
-            if (Math.hypot(sx, sy) < EPS) {
-              return slots;
-            }
+            if (Math.hypot(sx, sy) < EPS) return slots;
           }
         } catch (e) {
           console.error("Error in cycle decomposition:", e);
         }
-        
         return []; // Return empty array if no valid arrangement found
       }
 
       // Heuristic random search for a balanced arrangement
-      async function heuristicSearch(n, k, timeout = 10000) {
-        // Fall back to random search if cycle decomposition fails
+      async function heuristicSearch(n, k, timeout = 1500) {
+        if (k === n) return [...Array(n).keys()];
+        if (!balancedExists(n, k)) return [];
+        const cosT = Array.from({length: n}, (_, i) => Math.cos(2 * Math.PI * i / n));
+        const sinT = Array.from({length: n}, (_, i) => Math.sin(2 * Math.PI * i / n));
         const startTime = Date.now();
-        const workers = 4; // Number of parallel searches
-        let canceled = false;
-        
-        // Create a promise that rejects after timeout
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => {
-            canceled = true;
-            reject(new Error('Timeout exceeded'));
-          }, timeout);
-        });
-        
-        // Promise for finding a solution
-        const searchPromise = new Promise(resolve => {
-          // Run multiple search attempts in parallel
-          const searchAttempts = Array(workers).fill().map(() => {
-            return (async () => {
-              while (!canceled) {
-                // Generate random tube positions
-                const positions = new Set();
-                while (positions.size < k) {
-                  positions.add(Math.floor(Math.random() * n));
-                }
-                const pos = [...positions];
-                
-                // Check if balanced
-                let sx = 0, sy = 0;
-                for (const i of pos) {
-                  const angle = 2 * Math.PI * i / n;
-                  sx += Math.cos(angle);
-                  sy += Math.sin(angle);
-                }
-                
-                if (Math.hypot(sx, sy) < EPS) {
-                  resolve(pos);
-                  return;
-                }
-                
-                // Yield to the event loop occasionally
-                if (Date.now() - startTime > 50) {
-                  await new Promise(r => setTimeout(r, 0));
-                }
-              }
-            })();
-          });
-          
-          // When all searches fail (should only happen if canceled)
-          Promise.all(searchAttempts).then(() => resolve([]));
-        });
-        
-        try {
-          // Race between finding a solution and timeout
-          return await Promise.race([searchPromise, timeoutPromise]);
-        } catch (e) {
-          console.log('Heuristic search timed out');
-          return []; // Return empty array if timeout
+
+        // Pure random sampling, yielding to the event loop every ~30ms so the page stays responsive
+        while (Date.now() - startTime < timeout) {
+          const sliceEnd = Date.now() + 30;
+          while (Date.now() < sliceEnd) {
+            const positions = new Set();
+            while (positions.size < k) positions.add(Math.floor(Math.random() * n));
+            let sx = 0, sy = 0;
+            for (const i of positions) { sx += cosT[i]; sy += sinT[i]; }
+            if (Math.hypot(sx, sy) < EPS) return [...positions];
+          }
+          await new Promise(r => setTimeout(r, 0));
         }
+
+        // Random hits are astronomically rare for large n, so fall back to
+        // a randomized cycle decomposition
+        return findBalancedArrangementCycles(n, k, true);
       }
 
       function toggle(i) {
@@ -834,7 +881,13 @@
         render([...manualPos], 0, 0);
       }
 
-      function render(pos, total, unique, isCalculating = false) {
+      // Explain why no balanced arrangement exists (Lam–Leung condition fails)
+      function impossibleText(n, k) {
+        const primes = [...new Set(primeFactorization(n))];
+        return `No balanced arrangement exists for n=${n}, k=${k}: both k and n−k must be sums of the prime factors of n (${primes.join(', ')})`;
+      }
+
+      function render(pos, total, unique, isCalculating = false, idle = false) {
         const { sum, mag } = drawRotor(pos);
         const balanced = mag < EPS;
         resultP.className = 'result ' + (balanced ? 'balanced' : 'unbalanced');
@@ -849,8 +902,13 @@
         }
 
         let resultText = '';
-        if (total === 0 && pos.length === 0 && modeSel.value !== 'manual') {
-          resultText = 'No balanced patterns found for n=' + nInput.value + ', k=' + kInput.value;
+        if (idle) {
+          resultText = modeSel.value === 'manual'
+            ? `Click the slots to place up to ${kInput.value} tubes.`
+            : 'Choose n and k, then press Run.';
+          resultP.className = 'result';
+        } else if (total === 0 && pos.length === 0 && modeSel.value !== 'manual') {
+          resultText = impossibleText(+nInput.value, +kInput.value);
           resultP.className = 'result unbalanced';
         } else if (balanced) {
           resultText = 'Balanced ✅ → Σspin = 0';
@@ -918,8 +976,8 @@
         // Special handling for manual mode - render immediately
         if (modeSel.value === 'manual') {
             // Render empty state for manual mode initially or based on manualPos if needed
-            render([...manualPos], 0, 0); 
-            return; 
+            render([...manualPos], 0, 0, false, true);
+            return;
         }
 
         // Show loading state
@@ -939,7 +997,7 @@
               resultP.textContent = 'Balanced ✅ → Σspin = 0 (heuristic search found a solution)';
               resultP.className = 'result balanced';
             } else {
-              resultP.textContent = 'No balanced arrangement found within time limit';
+              resultP.textContent = balancedExists(n, k) ? 'No balanced arrangement found within time limit' : impossibleText(n, k);
               resultP.className = 'result unbalanced';
             }
             
@@ -970,7 +1028,9 @@
             resultP.textContent = `Balanced ✅ → Σspin = 0 (cycle decomposition${factorText})`;
             resultP.className = 'result balanced';
           } else {
-            resultP.textContent = `No balanced arrangement found using cycle decomposition (prime factors: ${uniqueFactors.join(', ')})`;
+            resultP.textContent = balancedExists(n, k)
+              ? `No balanced arrangement found using cycle decomposition (prime factors: ${uniqueFactors.join(', ')})`
+              : impossibleText(n, k);
             resultP.className = 'result unbalanced';
           }
           
@@ -982,6 +1042,24 @@
 
         // Run calculation asynchronously for other modes
         setTimeout(() => {
+            // Handle evil mode separately since it doesn't use balanced arrangements
+            if (modeSel.value === 'evil') {
+                const pick = evilArrangement(n, k);
+                render(pick, 0, 0);
+                if (pick.length > 0) {
+                    const mag = Math.hypot(
+                      pick.reduce((s, i) => s + Math.cos(2 * Math.PI * i / n), 0),
+                      pick.reduce((s, i) => s + Math.sin(2 * Math.PI * i / n), 0));
+                    resultP.textContent = `Evil ☠️ → Σspin ≈ ${mag.toFixed(6)} (smallest possible non-zero imbalance)`;
+                } else {
+                    resultP.textContent = 'No evil arrangement possible: every arrangement is balanced';
+                }
+                resultP.className = 'result evil';
+                runBtn.disabled = false;
+                runBtn.textContent = 'Run';
+                return;
+            }
+
         const all = allBalanced(n, k);
         const total = all.length;
         const unique = uniqueCount(all, n);
@@ -991,26 +1069,7 @@
         else if (modeSel.value === 'cursed') pick = cursedArrangement(all, n);
                 else if (modeSel.value === 'random') pick = all[Math.floor(Math.random() * total)];
             }
-            
-            // Handle evil mode separately since it doesn't use balanced arrangements
-            if (modeSel.value === 'evil') {
-                pick = evilArrangement(n, k);
-                // For evil mode, always use the found arrangement regardless of total
-                render(pick, 0, 0);
-                // Custom result text for evil mode
-                const { sum, mag } = drawRotor(pick);
-                if (pick.length > 0) {
-                    resultP.textContent = `Evil ☠️ → Σspin ≈ ${mag.toFixed(6)} (smallest possible non-zero imbalance)`;
-                    resultP.className = 'result evil';
-                } else {
-                    resultP.textContent = 'No evil arrangement found';
-                    resultP.className = 'result evil';
-                }
-                runBtn.disabled = false;
-                runBtn.textContent = 'Run';
-                return;
-            }
-            
+
             render(pick, total, unique); // Render final result
 
             // Restore button state
@@ -1021,7 +1080,13 @@
 
       clearBtn.addEventListener('click', () => {
         manualPos.clear();
-        render([], 0, 0);
+        render([], 0, 0, false, true);
+      });
+
+      // Re-draw when the mode changes so Manual mode is clickable right away
+      modeSel.addEventListener('change', () => {
+        manualPos.clear();
+        render([], 0, 0, false, true);
       });
 
       // Add event listener to nInput to update available modes when n changes
@@ -1030,7 +1095,7 @@
 
       // Initial setup
       updateAvailableModes();
-      render([], 0, 0);
+      render([], 0, 0, false, true);
     });
   </script>
 </body>
