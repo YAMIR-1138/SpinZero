@@ -60,7 +60,19 @@ Before searching, the app checks whether a balanced arrangement exists at all us
   - Place tubes yourself and see if your arrangement is balanced in real-time
   - Full vector visualization shows exactly how balanced (or unbalanced) your configuration is
   - Great for educational purposes and hands-on experimentation
+  - Already have some tubes in? Place them and press **Complete it for me** to fill in the rest
+  - Works with the keyboard too (Tab to a slot, Enter to place or remove a tube)
   - *Available for all n values*
+
+---
+
+#### Handy extras
+
+- **Load slots list** – every result shows the slots to load, numbered like the rotor, with a **Copy** button
+- **Imbalance arrow** – an orange arrow shows which way an unbalanced rotor is pulled; a ✓ in the centre means the forces cancel
+- **Share link** – copies a link like `?n=12&k=5&mode=elegant` that opens the same setup (Random and Manual links include the exact slots)
+- **Common rotor sizes** – one-tap buttons for 6, 8, 12, 18, 24, 30 and 36 slots
+- **Live updates** – Cycle Decomposition and Manual redraw as you type; the slower exhaustive modes run in the background without freezing the page
 
 **Try it here:**  
 [https://yamir-1138.github.io/SpinZero/](https://yamir-1138.github.io/SpinZero/)

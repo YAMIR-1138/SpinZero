@@ -64,6 +64,8 @@
       --shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
       --button-text: #ffffff;
       --link-color: var(--primary);
+      --slot-stroke: #718096; /* Outline of empty slots */
+      --muted-text: #4a5568;
 
       /* Dark Mode (New Theme) */
       --dark-primary: #63b3ed; /* Lighter Soft Blue (Button/Accent) */
@@ -95,6 +97,8 @@
       --shadow: var(--dark-shadow);
       --button-text: var(--dark-button-text);
       --link-color: var(--dark-link-color);
+      --slot-stroke: #a0aec0;
+      --muted-text: #a0aec0;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; } /* Reset margin/padding */
@@ -113,7 +117,7 @@
       width: 100%;
       max-width: 1200px;
       margin: auto;
-      padding: 0.5rem; /* Reduced padding for smaller screens */
+      padding: 0.75rem 1rem; /* Tighter padding for smaller screens */
     }
     @media(min-width:768px) {
        .container { padding: 1.5rem; }
@@ -237,6 +241,29 @@
       transition: background-color 0.3s, color 0.3s, border-color 0.3s;
     }
 
+    .presets {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.3rem;
+      margin-top: 0.5rem;
+    }
+    .presets-label { font-size: 0.85rem; opacity: 0.8; margin-right: 0.15rem; }
+
+    .input-error {
+      color: var(--empty-slot);
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-top: 0.4rem;
+    }
+
+    .mode-desc {
+      font-size: 0.9rem;
+      line-height: 1.4;
+      margin-top: 0.45rem;
+      opacity: 0.85;
+    }
+
     .buttons {
       display: flex;
       gap: 0.8rem;
@@ -246,59 +273,97 @@
     button {
       flex: 1;
       padding: 0.75rem; /* Increased padding */
-      border: none;
+      border: 1px solid var(--primary);
       border-radius: 4px;
       background: var(--primary);
       color: var(--button-text); /* Use variable */
       cursor: pointer;
-      font-weight: 600; /* Bolder text */
+      font-family: inherit;
+      font-weight: 700; /* Bolder text */
       transition: background 0.2s;
     }
 
     button:hover { background: var(--primary-dark); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--primary);
+    }
+    .btn-secondary:hover { background: var(--light-bg); }
+
+    .chip, .btn-small { flex: none; font-size: 0.85rem; }
+    .chip {
+      padding: 0.3rem 0.55rem;
+      border-radius: 999px;
+      border-color: var(--border-color);
+      background: var(--light-bg);
+      color: var(--dark-text);
+    }
+    .chip:hover, .chip.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: var(--button-text);
+    }
+    .btn-small { padding: 0.3rem 0.7rem; }
+
+    button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
 
     .result {
-      margin-top: 1rem; /* Increased spacing */
-      font-weight: 600;
+      font-weight: 700;
       min-height: 1.2em; /* Prevent layout shift */
+      margin-bottom: 0.6rem;
+      text-align: center;
+    }
+    .result .note {
+      display: block;
+      font-weight: 400;
+      margin-top: 0.3rem;
+      color: var(--dark-text);
+      text-shadow: none;
     }
 
     .balanced { color: var(--tube-fill); }
     .unbalanced { color: var(--empty-slot); }
-    .evil { 
+    .evil {
       color: #ff0000; /* Bright red for evil mode */
       text-shadow:
         -1px -1px 0 #000,
          1px -1px 0 #000,
         -1px  1px 0 #000,
          1px  1px 0 #000; /* Black outline */
-      font-weight: bold;
     }
+
+    .slot-list {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem 0.75rem;
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      background: var(--light-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      overflow-wrap: anywhere;
+    }
+    .slot-list[hidden], .math[hidden] { display: none; }
+    .slot-actions { display: flex; gap: 0.4rem; font-family: var(--font-sans); }
 
     svg {
       max-width: 100%;
       height: auto;
       display: block; /* Remove extra space below */
-      margin-bottom: 1rem; /* Space below SVG */
+      margin: 0.5rem 0 1rem;
       overflow: visible; /* Prevent clipping */
     }
-
-    /* Make marker lines thinner in dark mode maybe? */
-     .dark-mode svg line[stroke='var(--dark-text)'] {
-        /* Example: stroke: var(--dark-border-color); if needed */
-     }
-     /* Adjust vector colors */
-     svg line[stroke^="hsl"] { stroke: var(--vector); } /* Override HSL for now */
-     .dark-mode svg line[stroke^="hsl"] { stroke: var(--dark-vector); }
-
-    /* Style the arrowhead */
-    #arrowhead polygon { fill: var(--vector); }
-    .dark-mode #arrowhead polygon { fill: var(--dark-vector); }
-
-    /* Make numbers light in dark mode */
-    .dark-mode svg text {
-      fill: var(--dark-light-text);
-    }
+    .hit { cursor: pointer; outline: none; }
+    .hit:focus-visible { stroke: var(--primary); stroke-width: 3; }
 
     .math, .legend {
       font-family: var(--font-mono);
@@ -310,11 +375,14 @@
       margin-top: 1rem; /* Consistent spacing */
       overflow-x: auto;
       font-size: 0.9rem;
+      line-height: 1.5;
       width: 100%;
-      /* max-width: 320px; */ /* Allow full width */
       transition: background 0.3s, color 0.3s, border-color 0.3s;
     }
-     .math { word-break: break-all; } /* Prevent long math overflow */
+    .math { overflow-wrap: anywhere; } /* Prevent long math overflow */
+    .legend { padding: 0.75rem 1rem; }
+    .legend summary { cursor: pointer; font-family: var(--font-sans); font-weight: 700; }
+    .legend[open] summary { margin-bottom: 0.6rem; }
 
     .about {
       background: var(--panel-bg);
@@ -338,7 +406,7 @@
         margin-top: auto; /* Push footer down */
         padding: 1.5rem 1rem; /* Add padding */
         font-size:0.85rem;
-        color: gray;
+        color: var(--muted-text);
         width: 100%;
     }
     footer a {
@@ -370,15 +438,26 @@
       <div class="controls">
         <div class="form-group">
           <label for="nSlots">Number of rotor slots (n):</label>
-          <input id="nSlots" type="number" value="24" min="2">
+          <input id="nSlots" type="number" value="24" min="2" max="360" inputmode="numeric">
+          <div id="presets" class="presets" role="group" aria-label="Common rotor sizes">
+            <span class="presets-label">Common:</span>
+            <button type="button" class="chip" data-n="6">6</button>
+            <button type="button" class="chip" data-n="8">8</button>
+            <button type="button" class="chip" data-n="12">12</button>
+            <button type="button" class="chip" data-n="18">18</button>
+            <button type="button" class="chip" data-n="24">24</button>
+            <button type="button" class="chip" data-n="30">30</button>
+            <button type="button" class="chip" data-n="36">36</button>
+          </div>
         </div>
         <div class="form-group">
           <label for="kTubes">Number of loaded tubes (k):</label>
-          <input id="kTubes" type="number" value="6" min="1">
+          <input id="kTubes" type="number" value="6" min="1" max="24" inputmode="numeric">
+          <p id="inputError" class="input-error" role="alert" hidden></p>
         </div>
         <div class="form-group">
           <label for="modeSel">Choose your flavor of balance:</label>
-          <select id="modeSel">
+          <select id="modeSel" aria-describedby="modeDesc">
             <option value="cycle">Cycle Decomposition</option>
             <option value="elegant">Elegant</option>
             <option value="cursed">Cursed</option>
@@ -387,24 +466,35 @@
             <option value="heuristic">Heuristic Random</option>
             <option value="manual">Manual</option>
           </select>
+          <p id="modeDesc" class="mode-desc"></p>
           <small id="modeHelpText" style="display: none; color: var(--empty-slot); margin-top: 4px;">For n>24, only Cycle Decomposition, Heuristic Random, and Manual modes are available due to computational complexity.</small>
         </div>
         <div class="buttons">
-          <button id="runBtn">Run</button>
-          <button id="clearBtn">Clear</button>
+          <button id="runBtn" type="button">Run</button>
+          <button id="clearBtn" type="button" class="btn-secondary">Clear</button>
         </div>
-        <p id="result" class="result" aria-live="polite"></p>
       </div>
       <div class="visual">
-        <svg id="rotorSvg" viewBox="0 0 400 400" width="100%" role="img" aria-label="Centrifuge rotor diagram showing loaded tubes and their force vectors">
+        <p id="result" class="result" aria-live="polite"></p>
+        <div id="slotList" class="slot-list" hidden>
+          <span id="slotText"></span>
+          <span class="slot-actions">
+            <button type="button" id="copyBtn" class="btn-small" data-label="Copy">Copy</button>
+            <button type="button" id="shareBtn" class="btn-small btn-secondary" data-label="Share link">Share link</button>
+          </span>
+        </div>
+        <svg id="rotorSvg" viewBox="40 40 320 320" width="100%" role="img" aria-label="Centrifuge rotor diagram">
           <defs>
-            <marker id="arrowhead" markerWidth="20" markerHeight="12" refX="0" refY="6" orient="auto" markerUnits="strokeWidth">
-              <polygon points="0 0,20 6,0 12" fill="var(--vector)"/>
+            <marker id="imbalanceHead" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="3.2" markerHeight="3.2" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--empty-slot)"/>
             </marker>
           </defs>
         </svg>
-        <div id="mathBox" class="math"></div>
-        <div id="legend" class="legend"></div>
+        <div id="mathBox" class="math" hidden></div>
+        <details class="legend">
+          <summary>What does this mean?</summary>
+          <div id="legend"></div>
+        </details>
       </div>
     </div>
 
@@ -435,7 +525,7 @@
         <li><strong>Elegant / Cursed / Random</strong> – search every arrangement (rotors up to 24 slots) for the most symmetric, the most chaotic-looking, or any balanced layout.</li>
         <li><strong>Evil</strong> – the arrangement that is <em>almost</em> balanced: the smallest possible non-zero imbalance.</li>
         <li><strong>Heuristic Random</strong> – a random balanced layout for large rotors.</li>
-        <li><strong>Manual</strong> – click slots to check your own loading pattern before you hit start.</li>
+        <li><strong>Manual</strong> – click slots to check your own loading pattern before you hit start, or place the tubes you already have and let <em>Complete it for me</em> add the rest.</li>
       </ul>
       <p class="about-note">
         Always follow your centrifuge manufacturer’s instructions: tubes must also be filled to equal mass,
@@ -447,7 +537,7 @@
     Inspired by mathematical insights from <a href="https://www.kurims.kyoto-u.ac.jp/EMIS/journals/INTEGERS/papers/k31/k31.pdf" target="_blank" rel="noopener">Gary Sivek</a> and the <a href="https://mattbaker.blog/2018/06/25/the-balanced-centrifuge-problem/" target="_blank" rel="noopener">Matt Baker blog</a>.
     <br>Math is solid. Code may contain bugs. If your centrifuge goes flying, that's on me, not the roots of unity.
     <br>
-    <span style="opacity:0.6;">Use responsibly or your rotor may achieve low Earth orbit.</span>
+    <span style="opacity:0.85;">Use responsibly or your rotor may achieve low Earth orbit.</span>
     <br><br>
     Made just for fun by Yam Amir, a member of the <a href="https://rnd.tasmc.org.il/laboratories/the-translational-genetics-and-genomics-research-laboratory-prof-hagit-baris-feldman/" target="_blank" rel="noopener">TGGR lab</a>.
     <br>
@@ -464,166 +554,229 @@
       const resultP = document.getElementById('result');
       const mathBox = document.getElementById('mathBox');
       const legend = document.getElementById('legend');
+      const slotList = document.getElementById('slotList');
+      const slotText = document.getElementById('slotText');
+      const copyBtn = document.getElementById('copyBtn');
+      const shareBtn = document.getElementById('shareBtn');
+      const inputError = document.getElementById('inputError');
+      const modeDesc = document.getElementById('modeDesc');
+      const presets = document.getElementById('presets');
+      const visual = document.querySelector('.visual');
       let manualPos = new Set();
+      let addedPos = new Set(); // tubes placed by "Complete it for me"
+      let current = []; // arrangement currently on screen (0-based slots)
+      let currentListLabel = 'Load slots';
       const EPS = 1e-6;
+      const MAX_N = 360;
+      const CANONICAL_URL = 'https://yamir-1138.github.io/SpinZero/';
+      const BRUTE_FORCE_MODES = ['elegant', 'cursed', 'evil', 'random'];
+      const MODE_INFO = {
+        cycle: 'Builds a balanced layout from non-overlapping regular polygons. Fast for any rotor size.',
+        elegant: 'The most symmetric, evenly spaced balanced layout. Rotors up to 24 slots.',
+        cursed: 'Balanced, but with as many different gaps between tubes as possible. Rotors up to 24 slots.',
+        evil: 'Looks balanced, isn’t: the smallest possible non-zero imbalance. Do not spin this. Rotors up to 24 slots.',
+        random: 'Any balanced layout, picked at random from all of them. Rotors up to 24 slots.',
+        heuristic: 'A random balanced layout that also works for large rotors.',
+        manual: 'Click (or Tab + Enter) slots to place your own tubes. “Complete it for me” fills in the rest.'
+      };
+
+      // Read and validate n and k
+      function readInputs() {
+        const n = Number(nInput.value);
+        const k = Number(kInput.value);
+        let error = '', field = null;
+        if (!Number.isInteger(n) || n < 2 || n > MAX_N) {
+          error = `Rotor slots must be a whole number from 2 to ${MAX_N}.`; field = nInput;
+        } else if (!Number.isInteger(k) || k < 1 || k > n) {
+          error = `Tubes must be a whole number from 1 to ${n}.`; field = kInput;
+        }
+        return { n, k, error, field };
+      }
+
+      let busy = false;
+      function syncRunButton() {
+        const { error } = readInputs();
+        runBtn.disabled = busy || !!error;
+        runBtn.textContent = busy ? 'Calculating…' : (modeSel.value === 'manual' ? 'Complete it for me' : 'Run');
+      }
+      function setBusy(isBusy) {
+        busy = isBusy;
+        visual.setAttribute('aria-busy', isBusy ? 'true' : 'false');
+        syncRunButton();
+      }
+
+      function showInputError() {
+        const { n, error, field } = readInputs();
+        inputError.textContent = error;
+        inputError.hidden = !error;
+        nInput.setAttribute('aria-invalid', field === nInput ? 'true' : 'false');
+        kInput.setAttribute('aria-invalid', field === kInput ? 'true' : 'false');
+        if (Number.isInteger(n) && n >= 2) kInput.max = n;
+        presets.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', +c.dataset.n === n));
+        syncRunButton();
+        return error;
+      }
 
       // Function to update available modes based on n value
       function updateAvailableModes() {
         const n = +nInput.value;
-        const options = modeSel.options;
         const helpText = document.getElementById('modeHelpText');
-        
         // If n > 24, only allow Manual, Cycle and Heuristic Random modes
         const isLargeN = n > 24;
-        
-        for (let i = 0; i < options.length; i++) {
-          const value = options[i].value;
-          if (value !== 'manual' && value !== 'heuristic' && value !== 'cycle') {
-            // Disable or enable based on n value
-            options[i].disabled = isLargeN;
-          }
+        for (const option of modeSel.options) {
+          if (BRUTE_FORCE_MODES.includes(option.value)) option.disabled = isLargeN;
         }
-        
-        // Show/hide help text
         helpText.style.display = isLargeN ? 'block' : 'none';
-        
         // If current selection is disabled, switch to cycle
-        if (modeSel.options[modeSel.selectedIndex].disabled) {
-          modeSel.value = 'cycle';
-        }
+        if (modeSel.options[modeSel.selectedIndex].disabled) modeSel.value = 'cycle';
+        modeDesc.textContent = MODE_INFO[modeSel.value];
+        syncRunButton();
       }
 
-      // Dark Mode Toggle Logic
+      // Dark Mode Toggle Logic (storage can be unavailable, e.g. in private windows)
       const toggleButton = document.getElementById('darkModeToggle');
       const body = document.body;
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+      function storageGet(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+      function storageSet(key, value) { try { localStorage.setItem(key, value); } catch (e) { /* ignore */ } }
 
-      function setDarkMode(isDark) {
-          if (isDark) {
-              body.classList.add('dark-mode');
-              toggleButton.textContent = '🌙'; // Moon icon
-              localStorage.setItem('theme', 'dark');
-          } else {
-              body.classList.remove('dark-mode');
-              toggleButton.textContent = '☀️'; // Sun icon
-              localStorage.setItem('theme', 'light');
-          }
+      function setDarkMode(isDark, remember = true) {
+          body.classList.toggle('dark-mode', isDark);
+          toggleButton.textContent = isDark ? '🌙' : '☀️';
+          if (remember) storageSet('theme', isDark ? 'dark' : 'light');
       }
 
-      // Check local storage first
-      const currentTheme = localStorage.getItem('theme');
-      if (currentTheme) {
-          setDarkMode(currentTheme === 'dark');
-      } else {
-          // Otherwise, check OS preference
-          setDarkMode(prefersDark.matches);
-      }
-
-      // Listen for toggle button click
-      toggleButton.addEventListener('click', () => {
-          setDarkMode(!body.classList.contains('dark-mode'));
-      });
-
-      // Optional: Listen for OS theme changes
+      // Check local storage first, otherwise follow the OS preference
+      const currentTheme = storageGet('theme');
+      setDarkMode(currentTheme ? currentTheme === 'dark' : prefersDark.matches, false);
+      toggleButton.addEventListener('click', () => setDarkMode(!body.classList.contains('dark-mode')));
       prefersDark.addEventListener('change', (e) => {
           // Only change if no explicit choice was made via button
-          if (!localStorage.getItem('theme')) {
-              setDarkMode(e.matches);
-          }
+          if (!storageGet('theme')) setDarkMode(e.matches, false);
       });
 
-      function hsl(i, total) {
-        return `hsl(${(i/total)*360},70%,50%)`;
+      // Sum of unit vectors e^{2πi·j/n} (j = 0-based slot index, slot 1 = angle 0)
+      function sumOf(pos, n) {
+        let re = 0, im = 0;
+        for (const i of pos) { re += Math.cos(2 * Math.PI * i / n); im += Math.sin(2 * Math.PI * i / n); }
+        return { re, im, mag: Math.hypot(re, im) };
       }
 
-      function drawRotor(pos) {
-        const n = +nInput.value;
-        const r = 120; // Reduced radius for tubes
-        const cx = 200; // Centered in new viewBox
-        const cy = 200; // Centered in new viewBox
+      const slotNames = pos => pos.map(i => i + 1).sort((a, b) => a - b).join(', ');
+      const plural = (count, word) => `${count} ${word}${count === 1 ? '' : 's'}`;
+
+      // Reference marks (a 6-tube hexagon) for common rotor sizes, as 1-based slots
+      function markerSlots(n) {
+        if (n === 18) return [1, 4, 7, 10, 13, 16];
+        if (n === 24) return [1, 5, 9, 13, 17, 21];
+        if (n === 30) return [1, 6, 11, 16, 21, 26];
+        return [];
+      }
+
+      function svgEl(tag, attrs) {
+        const el = document.createElementNS(svg.namespaceURI, tag);
+        for (const [key, value] of Object.entries(attrs)) el.setAttribute(key, value);
+        return el;
+      }
+
+      function drawRotor(pos, n) {
+        [...svg.children].forEach(e => { if (e.tagName !== 'defs') e.remove(); });
+        if (!Number.isInteger(n) || n < 2 || n > MAX_N) return;
+        const r = 120, cx = 200, cy = 200;
+        // Slot 1 at 12 o'clock, numbered clockwise
         const angles = Array.from({ length: n }, (_, i) => 2*Math.PI*i/n - Math.PI/2);
-        svg.querySelectorAll('*:not(defs)').forEach(e => e.remove());
+        const loaded = new Set(pos);
+        const spacing = 2 * Math.PI * r / n;
+        const dotR = Math.min(8, spacing * 0.38);
+        const hitR = Math.min(16, spacing / 2);
+        const labelRadius = r + Math.max(dotR, 5) + 17;
+        const markerSet = new Set(markerSlots(n).map(s => s - 1));
+        const interactive = modeSel.value === 'manual';
 
-        // Define marker positions ONLY for specific n values
-        let markerPositions = [];
-        if (n === 18) {
-            markerPositions = [1, 10, 4, 13, 7, 16]; // User specified for n=18
-        } else if (n === 24) {
-            markerPositions = [1, 5, 17, 9, 21, 13]; // User specified for n=24 (removed 3)
-        } else if (n === 30) {
-            markerPositions = [1, 16, 6, 21, 11, 26]; // User specified for n=30 (interpreting 11-20 as 11 and 26)
-        }
-        // Convert to 0-based index set for quick lookup (will be empty if n doesn't match)
-        const markerSet = new Set(markerPositions.map(p => p - 1));
-
-        // 1. Draw Labels and Markers First
+        // 1. Labels (every slot for small rotors, every 5th for large ones) and reference marks
         angles.forEach((th, i) => {
-          // Move labels further outward but still inside viewBox
-          const labelRadius = r + 25; // Adjusted for smaller radius
-          const lx = cx + labelRadius*Math.cos(th);
-          const ly = cy + labelRadius*Math.sin(th);
-          const lbl = document.createElementNS(svg.namespaceURI, 'text');
-          lbl.setAttribute('x', lx);
-          lbl.setAttribute('y', ly);
-          lbl.setAttribute('font-size', '11');
-          lbl.setAttribute('text-anchor', 'middle');
-          lbl.setAttribute('dominant-baseline', 'middle');
-          lbl.textContent = i + 1;
-          lbl.setAttribute('fill', getComputedStyle(body).getPropertyValue('--dark-text').trim());
-          svg.appendChild(lbl);
-
-          // Replace marker lines with small dots
+          const s = i + 1;
+          if (n <= 36 || s === 1 || s % 5 === 0) {
+            const lbl = svgEl('text', {
+              x: cx + labelRadius*Math.cos(th), y: cy + labelRadius*Math.sin(th),
+              'font-size': n <= 36 ? 11 : 10, 'text-anchor': 'middle', 'dominant-baseline': 'middle',
+              fill: 'var(--dark-text)'
+            });
+            lbl.textContent = s;
+            svg.appendChild(lbl);
+          }
           if (markerSet.has(i)) {
-            const markerRadius = r + 12; // Adjusted for smaller tube radius
-            const markerX = cx + markerRadius * Math.cos(th);
-            const markerY = cy + markerRadius * Math.sin(th);
-            
-            // Create a small circle instead of a line
-            const marker = document.createElementNS(svg.namespaceURI, 'circle');
-            marker.setAttribute('cx', markerX);
-            marker.setAttribute('cy', markerY);
-            marker.setAttribute('r', 2); // Small dot
-            marker.setAttribute('fill', 'var(--dark-text)');
-            svg.appendChild(marker);
+            const markerRadius = r + dotR + 4;
+            svg.appendChild(svgEl('circle', {
+              cx: cx + markerRadius*Math.cos(th), cy: cy + markerRadius*Math.sin(th), r: 2, fill: 'var(--dark-text)'
+            }));
           }
         });
 
-        // 2. Draw Vectors for loaded tubes
-        pos.forEach((i, j) => {
-          const th = angles[i];
-          const x = cx + r*Math.cos(th);
-          const y = cy + r*Math.sin(th);
-          const line = document.createElementNS(svg.namespaceURI, 'line');
-          line.setAttribute('x1', cx);
-          line.setAttribute('y1', cy);
-          line.setAttribute('x2', x);
-          line.setAttribute('y2', y);
-          // Use CSS variable for vector color
-          line.setAttribute('stroke', 'var(--vector)');
-          line.setAttribute('stroke-width', 3);
-          svg.appendChild(line);
+        // 2. Force vector for each loaded tube
+        pos.forEach(i => {
+          svg.appendChild(svgEl('line', {
+            x1: cx, y1: cy, x2: cx + r*Math.cos(angles[i]), y2: cy + r*Math.sin(angles[i]),
+            stroke: 'var(--vector)', 'stroke-width': pos.length > 40 ? 1.5 : 3
+          }));
         });
 
-        // 3. Draw Tube Slots (Circles) Last - ensuring they are on top
+        // 3. Net imbalance: an arrow showing where the rotor is pulled, or a check mark when balanced
+        if (pos.length > 0) {
+          let sx = 0, sy = 0;
+          pos.forEach(i => { sx += Math.cos(angles[i]); sy += Math.sin(angles[i]); });
+          const mag = Math.hypot(sx, sy);
+          if (mag < EPS) {
+            svg.appendChild(svgEl('circle', { cx, cy, r: 11, fill: 'var(--tube-fill)', stroke: 'var(--panel-bg)', 'stroke-width': 2 }));
+            const tick = svgEl('text', { x: cx, y: cy + 1, 'font-size': 14, 'font-weight': 700, 'text-anchor': 'middle', 'dominant-baseline': 'middle', fill: '#fff' });
+            tick.textContent = '✓';
+            svg.appendChild(tick);
+          } else {
+            // Drawn to the same scale as the tube vectors, but never so short it's invisible
+            const len = Math.max(26, Math.min(r - 16, mag * r));
+            const arrow = svgEl('line', {
+              x1: cx, y1: cy, x2: cx + len*sx/mag, y2: cy + len*sy/mag,
+              stroke: 'var(--empty-slot)', 'stroke-width': 5, 'stroke-linecap': 'round',
+              'marker-end': 'url(#imbalanceHead)'
+            });
+            const title = svgEl('title', {});
+            title.textContent = `Net imbalance: ${mag.toFixed(4)} tube-widths of pull`;
+            arrow.appendChild(title);
+            svg.appendChild(arrow);
+          }
+        }
+
+        // 4. Slots: filled = tube, hollow = empty, dashed ring = added by "Complete it for me"
         angles.forEach((th, i) => {
-          const x = cx + r*Math.cos(th);
-          const y = cy + r*Math.sin(th);
-          const dot = document.createElementNS(svg.namespaceURI, 'circle');
-          dot.setAttribute('cx', x);
-          dot.setAttribute('cy', y);
-          dot.setAttribute('r', 8); // Tube radius
-          // Use CSS variables for fill colors
-          dot.setAttribute('fill', pos.includes(i) ? 'var(--tube-fill)' : 'var(--empty-slot)');
-          if (modeSel.value === 'manual') {
-            dot.style.cursor = 'pointer';
-            dot.addEventListener('click', () => toggle(i));
+          const x = cx + r*Math.cos(th), y = cy + r*Math.sin(th);
+          svg.appendChild(loaded.has(i)
+            ? svgEl('circle', { cx: x, cy: y, r: dotR, fill: 'var(--tube-fill)' })
+            : svgEl('circle', { cx: x, cy: y, r: Math.max(dotR - 0.75, 1), fill: 'var(--panel-bg)', stroke: 'var(--slot-stroke)', 'stroke-width': 1.5 }));
+          if (addedPos.has(i) && loaded.has(i)) {
+            svg.appendChild(svgEl('circle', { cx: x, cy: y, r: dotR + 3.5, fill: 'none', stroke: 'var(--tube-fill)', 'stroke-width': 1.5, 'stroke-dasharray': '3 2' }));
           }
-          svg.appendChild(dot);
         });
 
-        const sum = pos.reduce((s, i) => [s[0] + Math.cos(angles[i]), s[1] + Math.sin(angles[i])], [0, 0]);
-        const mag = Math.hypot(sum[0], sum[1]);
-        return { sum, mag };
+        // 5. Larger invisible hit areas on top, so slots are easy to tap and reachable by keyboard
+        if (interactive) {
+          angles.forEach((th, i) => {
+            const hit = svgEl('circle', {
+              cx: cx + r*Math.cos(th), cy: cy + r*Math.sin(th), r: hitR, fill: 'transparent',
+              class: 'hit', tabindex: 0, role: 'button', 'data-slot': i,
+              'aria-label': `Slot ${i + 1}, ${loaded.has(i) ? 'tube' : 'empty'}`,
+              'aria-pressed': loaded.has(i) ? 'true' : 'false'
+            });
+            hit.addEventListener('click', () => toggle(i));
+            hit.addEventListener('keydown', e => {
+              if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(i, true); }
+            });
+            svg.appendChild(hit);
+          });
+        }
+
+        svg.setAttribute('aria-label', pos.length
+          ? `Rotor with ${n} slots; tubes in slots ${slotNames(pos)}`
+          : `Empty rotor with ${n} slots`);
       }
 
       function* combos(arr, k, start = 0, pick = []) {
@@ -734,15 +887,17 @@
       }
       
       // Generate all multisets of (prime, count) such that sum(prime*count) = k
-      function* allDecompositions(k, primes, maxCounts, idx = 0, current = {}) {
+      // With mostFirst, try the most cycles of the first prime first
+      function* allDecompositions(k, primes, maxCounts, mostFirst = false, idx = 0, current = {}) {
         if (idx === primes.length) {
           if (k === 0) yield { ...current };
           return;
         }
         const p = primes[idx];
-        for (let cnt = 0; cnt <= Math.min(Math.floor(k / p), maxCounts[p]); cnt++) {
-          current[p] = cnt;
-          yield* allDecompositions(k - cnt * p, primes, maxCounts, idx + 1, current);
+        const max = Math.min(Math.floor(k / p), maxCounts[p]);
+        for (let i = 0; i <= max; i++) {
+          current[p] = mostFirst ? max - i : i;
+          yield* allDecompositions(k - current[p] * p, primes, maxCounts, mostFirst, idx + 1, current);
         }
       }
 
@@ -761,8 +916,27 @@
         return isSumOfPrimes(k, primes) && isSumOfPrimes(n - k, primes);
       }
 
-      // Select disjoint p-cycles (regular p-gons, p a prime factor of n) totalling k slots
-      function selectCycles(n, k, shuffle = false) {
+      // Order 0..m-1 so each next index is as far as possible (circularly) from those before it,
+      // so the first cycles picked are spread evenly around the rotor
+      const spreadCache = new Map();
+      function spreadOrder(m) {
+        if (spreadCache.has(m)) return spreadCache.get(m);
+        const order = [0];
+        const dist = Array.from({ length: m }, (_, i) => Math.min(i, m - i));
+        while (order.length < m) {
+          let best = -1;
+          for (let i = 0; i < m; i++) if (dist[i] > 0 && (best < 0 || dist[i] > dist[best])) best = i;
+          order.push(best);
+          dist[best] = 0;
+          for (let i = 0; i < m; i++) dist[i] = Math.min(dist[i], Math.abs(i - best), m - Math.abs(i - best));
+        }
+        spreadCache.set(m, order);
+        return order;
+      }
+
+      // Select disjoint p-cycles (regular p-gons, p a prime factor of n) totalling k slots,
+      // never touching the slots in `blocked`
+      function selectCycles(n, k, shuffle = false, blocked = new Set()) {
         // Largest primes first: their cycles are hardest to fit, while the smallest
         // prime is placed last where a greedy pick is exact (same-length cycles never overlap)
         const uniquePrimes = [...new Set(primeFactorization(n))].sort((a, b) => b - a);
@@ -777,12 +951,12 @@
             Array.from({length: p}, (_, j) => i + j*step)
           );
           if (shuffle) cycles.sort(() => Math.random() - 0.5);
-          cyclesByPrime[p] = cycles;
+          cyclesByPrime[p] = shuffle ? cycles : spreadOrder(step).map(i => cycles[i]);
         });
 
-        // Timeout logic to prevent runaway search
-        const startTime = Date.now();
-        const TIMEOUT_MS = 2000;
+        // Timeout logic to prevent runaway search (reset for each search pass below)
+        let startTime = Date.now();
+        let TIMEOUT_MS = 2000;
 
         function* combinations(arr, m, start = 0, pick = []) {
           if (pick.length === m) { yield pick.slice(); return; }
@@ -812,11 +986,17 @@
           return null;
         }
 
-        // Try all possible decompositions of k as a sum of the available primes
-        for (const decomp of allDecompositions(k, uniquePrimes, maxCycles)) {
-          if (Date.now() - startTime > TIMEOUT_MS) return [];
-          const result = backtrack(decomp, 0, [], new Set());
-          if (result) return result;
+        // Try all possible decompositions of k as a sum of the available primes.
+        // First pass prefers fewer, bigger polygons (more symmetric) but gets a short budget,
+        // since with many distinct primes that order can be slow; the second pass is the fast order.
+        for (const [mostFirst, budget] of [[true, 200], [false, 2000]]) {
+          startTime = Date.now();
+          TIMEOUT_MS = budget;
+          for (const decomp of allDecompositions(k, uniquePrimes, maxCycles, mostFirst)) {
+            if (Date.now() - startTime > TIMEOUT_MS) break;
+            const result = backtrack(decomp, 0, [], new Set(blocked));
+            if (result) return result;
+          }
         }
         return [];
       }
@@ -875,10 +1055,109 @@
         return findBalancedArrangementCycles(n, k, true);
       }
 
-      function toggle(i) {
-        if (manualPos.has(i)) manualPos.delete(i);
-        else if (manualPos.size < +kInput.value) manualPos.add(i);
-        render([...manualPos], 0, 0);
+      // Find a balanced set of k slots that keeps every slot in `fixed`
+      function completeArrangement(n, k, fixed) {
+        if (fixed.length === 0) return findBalancedArrangementCycles(n, k);
+        if (k === n) return [...Array(n).keys()];
+        if (!balancedExists(n, k)) return [];
+        const fixedSet = new Set(fixed);
+        const valid = sol => sol.length === k && fixed.every(s => sol.includes(s)) && sumOf(sol, n).mag < EPS;
+
+        // View 1: the empty slots must form a balanced set that avoids the fixed tubes
+        function viaComplement() {
+          const empty = new Set(selectCycles(n, n - k, false, fixedSet));
+          return empty.size === n - k ? [...Array(n).keys()].filter(i => !empty.has(i)) : [];
+        }
+        // View 2: cover each fixed tube with a regular polygon through it, then fill up with more polygons
+        function viaCover() {
+          const primes = [...new Set(primeFactorization(n))];
+          const startTime = Date.now();
+          function cover(used) {
+            if (Date.now() - startTime > 2000) return null;
+            const f = fixed.find(s => !used.has(s));
+            if (f === undefined) {
+              const rest = k - used.size;
+              if (rest === 0) return [...used];
+              const fill = selectCycles(n, rest, false, used);
+              return fill.length === rest ? [...used, ...fill] : null;
+            }
+            for (const p of primes) {
+              const step = n / p;
+              const cyc = Array.from({ length: p }, (_, j) => (f + j*step) % n);
+              if (used.size + p > k || cyc.some(s => used.has(s))) continue;
+              const result = cover(new Set([...used, ...cyc]));
+              if (result) return result;
+            }
+            return null;
+          }
+          return cover(new Set()) || [];
+        }
+
+        const order = k > n / 2 ? [viaComplement, viaCover] : [viaCover, viaComplement];
+        for (const attempt of order) {
+          const sol = attempt();
+          if (valid(sol)) return sol;
+        }
+        return [];
+      }
+
+      // Exhaustive modes (n <= 24). Self-contained so it can also run inside a Web Worker.
+      function bruteForceTask({ mode, n, k }) {
+        if (mode === 'evil') return { pick: evilArrangement(n, k) };
+        const all = allBalanced(n, k);
+        let pick = [];
+        if (all.length > 0) {
+          if (mode === 'elegant') pick = elegantArrangement(all, n);
+          else if (mode === 'cursed') pick = cursedArrangement(all, n);
+          else pick = all[Math.floor(Math.random() * all.length)];
+        }
+        return { pick, total: all.length, unique: uniqueCount(all, n) };
+      }
+
+      // Run the exhaustive search in a background worker so the page stays responsive
+      const WORKER_SRC = `const EPS = ${EPS};\n` +
+        [combos, allBalanced, uniqueCount, elegantArrangement, cursedArrangement, evilArrangement, bruteForceTask]
+          .map(f => f.toString()).join('\n') +
+        '\nonmessage = e => postMessage(bruteForceTask(e.data));';
+      let activeWorker = null;
+
+      function computeInBackground(task) {
+        return new Promise(resolve => {
+          // Fallback when workers are unavailable (e.g. blocked by a security policy)
+          const onMainThread = () => setTimeout(() => resolve(bruteForceTask(task)), 20);
+          let worker, url;
+          try {
+            url = URL.createObjectURL(new Blob([WORKER_SRC], { type: 'text/javascript' }));
+            worker = new Worker(url);
+          } catch (e) {
+            onMainThread();
+            return;
+          }
+          activeWorker = worker;
+          const finish = () => { worker.terminate(); URL.revokeObjectURL(url); if (activeWorker === worker) activeWorker = null; };
+          worker.onmessage = e => { finish(); resolve(e.data); };
+          worker.onerror = e => { e.preventDefault(); finish(); onMainThread(); };
+          worker.postMessage(task);
+        });
+      }
+
+      // Results from a run that was superseded (inputs changed meanwhile) are ignored
+      let runToken = 0;
+      function cancelRun() {
+        runToken++;
+        if (activeWorker) { activeWorker.terminate(); activeWorker = null; }
+        if (busy) setBusy(false);
+      }
+
+      function toggle(i, refocus = false) {
+        const { k } = readInputs();
+        let note = '';
+        if (manualPos.has(i)) { manualPos.delete(i); addedPos.delete(i); }
+        else if (manualPos.size < k) manualPos.add(i);
+        else note = `All ${k} tubes are placed – remove one first, or raise k.`;
+        manualRender(note);
+        updateUrl();
+        if (refocus) svg.querySelector(`[data-slot="${i}"]`)?.focus();
       }
 
       // Explain why no balanced arrangement exists (Lam–Leung condition fails)
@@ -887,215 +1166,293 @@
         return `No balanced arrangement exists for n=${n}, k=${k}: both k and n−k must be sums of the prime factors of n (${primes.join(', ')})`;
       }
 
-      function render(pos, total, unique, isCalculating = false, idle = false) {
-        const { sum, mag } = drawRotor(pos);
+      const fmt = v => (Math.abs(v) < 5e-4 ? 0 : v).toFixed(3);
+
+      // Draw an arrangement and describe it.
+      // opts: message (replaces the balance text), cls, extra (appended), note (second line), listLabel
+      function render(pos, opts = {}) {
+        const { n } = readInputs();
+        current = pos.slice();
+        drawRotor(pos, n);
+        const { re, im, mag } = sumOf(pos, n);
         const balanced = mag < EPS;
-        resultP.className = 'result ' + (balanced ? 'balanced' : 'unbalanced');
-        const currentMode = modeSel.value; // Get current mode
 
-        if (isCalculating) {
-             resultP.textContent = 'Calculating arrangements...';
-             resultP.className = 'result'; // Neutral color while calculating
-             mathBox.innerHTML = ''; // Clear math box
-             legend.innerHTML = ''; // Clear legend
-             return; // Don't show balance status or math yet
+        let text = opts.message, cls = opts.cls || '';
+        if (text === undefined && pos.length > 0) {
+          text = balanced
+            ? 'Balanced ✅ → Σspin = 0'
+            : `Unbalanced ❌ → Σspin = ${fmt(re)} ${im < 0 ? '−' : '+'} ${fmt(Math.abs(im))}i`;
+          cls = opts.cls || (balanced ? 'balanced' : 'unbalanced');
+        }
+        resultP.textContent = [text, opts.extra].filter(Boolean).join(' ');
+        resultP.className = 'result ' + cls;
+        if (opts.note) {
+          const note = document.createElement('span');
+          note.className = 'note';
+          note.textContent = opts.note;
+          resultP.appendChild(note);
         }
 
-        let resultText = '';
-        if (idle) {
-          resultText = modeSel.value === 'manual'
-            ? `Click the slots to place up to ${kInput.value} tubes.`
-            : 'Choose n and k, then press Run.';
-          resultP.className = 'result';
-        } else if (total === 0 && pos.length === 0 && modeSel.value !== 'manual') {
-          resultText = impossibleText(+nInput.value, +kInput.value);
-          resultP.className = 'result unbalanced';
-        } else if (balanced) {
-          resultText = 'Balanced ✅ → Σspin = 0';
-        } else {
-          const realPart = sum[0].toFixed(3);
-          const imagPart = sum[1].toFixed(3);
-          const imagSign = sum[1] >= 0 ? '+' : '-';
-          const imagAbs = Math.abs(sum[1]).toFixed(3);
-          resultText = `Unbalanced ❌ → Σspin = ${realPart} ${imagSign} i·${imagAbs}`;
-        }
+        // Plain list of slots to load, numbered like the rotor
+        currentListLabel = opts.listLabel || 'Load slots';
+        slotList.hidden = pos.length === 0;
+        slotText.textContent = `${currentListLabel}: ${slotNames(pos)}`;
 
-        // Add stats back if applicable
-        if (total > 0 && modeSel.value !== 'manual') {
-             resultText += ` (${unique} unique pattern${unique !== 1 ? 's' : ''} from ${total} total solution${total !== 1 ? 's' : ''})`;
-        }
-        resultP.textContent = resultText;
+        // The equation, using the same slot numbers as the picture
+        mathBox.hidden = pos.length === 0;
+        mathBox.innerHTML = `Σ e<sup>2πi(s−1)/${n}</sup> for s ∈ {${slotNames(pos)}}<br>` +
+          `= ${fmt(re)} ${im < 0 ? '−' : '+'} ${fmt(Math.abs(im))}i` + (balanced ? ' = 0' : '');
 
-        const n = +nInput.value;
-        const terms = pos.length > 0 ? pos.map(i => `e<sup>i·2π·${i}/${n}</sup>`).join(' + ') : '0';
-        const mathEqBase = `Σ e<sup>iθ</sup> = ${terms}`;
-        const mathResult = `= ${sum[0].toFixed(3)} + i·${sum[1].toFixed(3)}`;
-        mathBox.innerHTML = mathEqBase + (pos.length > 0 ? mathResult : '') + (balanced && pos.length > 0 ? ' = 0' : '');
-
-        // Update legend based on current mode
-        let legendHTML = `<strong>Equation Breakdown:</strong><br>
-          Σ – sum over tubes<br>
-          e<sup>iθ</sup> – unit vector at angle θ<br>
-          θ = 2π·j/n, where:<br>
-          &nbsp;&nbsp;• j = tube slot index (0-based)<br>
-          &nbsp;&nbsp;• n = total slots<br>
-          Perfectly balanced (as all things should be) when Σ = 0`;
-          
-        // Add cycle explanation for cycle decomposition mode
-        if (currentMode === 'cycle' && balanced) {
-          const factors = primeFactorization(n);
-          const uniqueFactors = [...new Set(factors)];
-          
-          legendHTML += `<br><br><strong>Cycle Decomposition:</strong><br>
-            A balanced arrangement can be constructed using cycles where:<br>
-            &nbsp;&nbsp;• Each cycle has length p, where p is a prime factor of n<br>
-            &nbsp;&nbsp;• n = ${n} has prime factors: ${uniqueFactors.join(', ')}<br>
-            &nbsp;&nbsp;• k = ${pos.length} can be expressed as a sum of these factors`;
-        }
-        
-        legend.innerHTML = legendHTML;
+        renderLegend(n, pos, balanced);
       }
 
-      runBtn.addEventListener('click', () => {
-        const n = +nInput.value;
-        const k = +kInput.value;
-        if (k < 1 || k > n) return alert('Invalid tube count: k must be between 1 and n.');
-        
-        // Safety check: For n > 24, only allow certain modes
-        if (n > 24 && !['manual', 'heuristic', 'cycle'].includes(modeSel.value)) {
-          alert('For n > 24, only Cycle Decomposition, Heuristic Random, and Manual modes are available due to computational complexity.');
-          // Switch to cycle decomposition mode
-          modeSel.value = 'cycle';
-          // Update all dropdown options to reflect current n value
-          updateAvailableModes();
+      function renderLegend(n, pos, balanced) {
+        let html = `<strong>The equation</strong><br>
+          Σ – sum over loaded tubes<br>
+          e<sup>iθ</sup> – unit vector pointing at a tube, θ = 2π·(s−1)/n<br>
+          s – slot number, as labelled on the rotor (1…n)<br>
+          Perfectly balanced (as all things should be) when Σ = 0<br><br>
+          <strong>The picture</strong><br>
+          ● filled circle – tube &nbsp; ○ hollow circle – empty slot<br>
+          dark lines – each tube’s pull on the rotor<br>
+          orange arrow – net imbalance: the direction the rotor is pulled (tiny imbalances are drawn enlarged)<br>
+          ✓ in the centre – all forces cancel`;
+        if (addedPos.size > 0) html += `<br>dashed ring – tube added by “Complete it for me”`;
+        const marks = markerSlots(n);
+        if (marks.length) html += `<br>small dots outside the rim – reference marks at slots ${marks.join(', ')} (a 6-tube hexagon)`;
+        if (modeSel.value === 'cycle' && balanced && pos.length > 0) {
+          const uniqueFactors = [...new Set(primeFactorization(n))];
+          html += `<br><br><strong>Cycle decomposition</strong><br>
+            The layout is built from non-overlapping cycles (regular polygons):<br>
+            &nbsp;&nbsp;• each cycle has length p, where p is a prime factor of n<br>
+            &nbsp;&nbsp;• n = ${n} has prime factors: ${uniqueFactors.join(', ')}<br>
+            &nbsp;&nbsp;• k = ${pos.length} is written as a sum of these factors`;
+        }
+        legend.innerHTML = html;
+      }
+
+      function manualRender(note = '') {
+        const { k } = readInputs();
+        const pos = [...manualPos];
+        render(pos, {
+          message: pos.length ? undefined : `Click the slots to place up to ${k} tubes.`,
+          extra: pos.length ? `(${pos.length} / ${k} placed)` : '',
+          note,
+          listLabel: addedPos.size ? 'Load slots' : 'Your tubes'
+        });
+      }
+
+      function showIdle() {
+        addedPos.clear();
+        if (modeSel.value === 'manual') manualRender();
+        else render([], { message: 'Choose n and k, then press Run.' });
+      }
+
+      function completeManual() {
+        const { n, k } = readInputs();
+        const fixed = [...manualPos];
+        if (fixed.length === k) {
+          manualRender(sumOf(fixed, n).mag < EPS
+            ? 'Already balanced – nothing to add.'
+            : `All ${k} tubes are placed. Remove some (or raise k) so I can complete it.`);
           return;
         }
-        
-        manualPos.clear();
-
-        // Special handling for manual mode - render immediately
-        if (modeSel.value === 'manual') {
-            // Render empty state for manual mode initially or based on manualPos if needed
-            render([...manualPos], 0, 0, false, true);
-            return;
-        }
-
-        // Show loading state
-        runBtn.disabled = true;
-        runBtn.textContent = 'Calculating...';
-        render([], 0, 0, true); // Call render with calculating flag
-
-        // Special handling for heuristic mode
-        if (modeSel.value === 'heuristic') {
-          // Use async heuristic search
-          heuristicSearch(n, k).then(solution => {
-            // Render the solution
-            render(solution, solution.length > 0 ? 1 : 0, solution.length > 0 ? 1 : 0);
-            
-            // Update result text for heuristic mode
-            if (solution.length > 0) {
-              resultP.textContent = 'Balanced ✅ → Σspin = 0 (heuristic search found a solution)';
-              resultP.className = 'result balanced';
-            } else {
-              resultP.textContent = balancedExists(n, k) ? 'No balanced arrangement found within time limit' : impossibleText(n, k);
-              resultP.className = 'result unbalanced';
-            }
-            
-            // Restore button state
-            runBtn.disabled = false;
-            runBtn.textContent = 'Run';
-          });
+        const sol = completeArrangement(n, k, fixed);
+        if (sol.length === 0) {
+          manualRender(balancedExists(n, k)
+            ? `Couldn’t find a balanced layout of ${k} tubes that keeps your tubes where they are. Try moving one.`
+            : impossibleText(n, k));
           return;
         }
-        
-        // Special handling for cycle decomposition mode
-        if (modeSel.value === 'cycle') {
-          // Get prime factorization for display
-          const factors = primeFactorization(n);
-          const uniqueFactors = [...new Set(factors)];
-          
-          // Try to find a balanced arrangement using cycle decomposition
+        addedPos = new Set(sol.filter(i => !manualPos.has(i)));
+        manualPos = new Set(sol);
+        manualRender(fixed.length
+          ? `Added ${addedPos.size === 1 ? 'slot' : 'slots'} ${slotNames([...addedPos])} to balance your ${plural(fixed.length, 'tube')}.`
+          : `Placed all ${k} tubes for you.`);
+      }
+
+      async function run({ scroll = false } = {}) {
+        cancelRun();
+        if (showInputError()) return;
+        const { n, k } = readInputs();
+        const mode = modeSel.value;
+        const token = runToken;
+
+        if (mode === 'manual') {
+          completeManual();
+        } else if (mode === 'cycle') {
+          addedPos.clear();
+          const uniqueFactors = [...new Set(primeFactorization(n))];
           const solution = findBalancedArrangementCycles(n, k);
-          
-          // Render the solution
-          render(solution, solution.length > 0 ? 1 : 0, solution.length > 0 ? 1 : 0);
-          
-          // Update result text for cycle mode
-          if (solution.length > 0) {
-            const factorText = uniqueFactors.length > 0 
-              ? ` using prime factors [${uniqueFactors.join(', ')}]`
-              : '';
-            resultP.textContent = `Balanced ✅ → Σspin = 0 (cycle decomposition${factorText})`;
-            resultP.className = 'result balanced';
+          if (solution.length > 0) render(solution, { extra: `(cycle decomposition, prime factors ${uniqueFactors.join(', ')})` });
+          else render([], {
+            message: balancedExists(n, k) ? `No balanced arrangement found using cycle decomposition (prime factors: ${uniqueFactors.join(', ')})` : impossibleText(n, k),
+            cls: 'unbalanced'
+          });
+        } else {
+          addedPos.clear();
+          setBusy(true);
+          render([], { message: 'Calculating arrangements…' });
+          let res;
+          if (mode === 'heuristic') {
+            res = { pick: await heuristicSearch(n, k) };
           } else {
-            resultP.textContent = balancedExists(n, k)
-              ? `No balanced arrangement found using cycle decomposition (prime factors: ${uniqueFactors.join(', ')})`
-              : impossibleText(n, k);
-            resultP.className = 'result unbalanced';
+            res = await computeInBackground({ mode, n, k });
           }
-          
-          // Restore button state
-          runBtn.disabled = false;
-          runBtn.textContent = 'Run';
-          return;
+          if (token !== runToken) return; // inputs changed while calculating
+          setBusy(false);
+          const { pick } = res;
+
+          if (mode === 'evil') {
+            if (pick.length > 0) render(pick, {
+              message: `Evil ☠️ → Σspin ≈ ${sumOf(pick, n).mag.toFixed(6)} (smallest possible non-zero imbalance)`,
+              cls: 'evil', listLabel: 'Evil layout (do NOT use)'
+            });
+            else render([], { message: 'No evil arrangement possible: every arrangement is balanced', cls: 'evil' });
+          } else if (mode === 'heuristic') {
+            if (pick.length > 0) render(pick, { extra: '(random search)' });
+            else render([], { message: balancedExists(n, k) ? 'No balanced arrangement found within time limit' : impossibleText(n, k), cls: 'unbalanced' });
+          } else if (res.total > 0) {
+            render(pick, { extra: `(${plural(res.total, 'balanced layout')}, ${res.unique} unique up to rotation)` });
+          } else {
+            render([], { message: impossibleText(n, k), cls: 'unbalanced' });
+          }
         }
+        updateUrl();
+        if (scroll) scrollToRotor();
+      }
 
-        // Run calculation asynchronously for other modes
-        setTimeout(() => {
-            // Handle evil mode separately since it doesn't use balanced arrangements
-            if (modeSel.value === 'evil') {
-                const pick = evilArrangement(n, k);
-                render(pick, 0, 0);
-                if (pick.length > 0) {
-                    const mag = Math.hypot(
-                      pick.reduce((s, i) => s + Math.cos(2 * Math.PI * i / n), 0),
-                      pick.reduce((s, i) => s + Math.sin(2 * Math.PI * i / n), 0));
-                    resultP.textContent = `Evil ☠️ → Σspin ≈ ${mag.toFixed(6)} (smallest possible non-zero imbalance)`;
-                } else {
-                    resultP.textContent = 'No evil arrangement possible: every arrangement is balanced';
-                }
-                resultP.className = 'result evil';
-                runBtn.disabled = false;
-                runBtn.textContent = 'Run';
-                return;
-            }
+      // On phones the rotor sits below the controls: bring it into view after an explicit Run
+      function scrollToRotor() {
+        if (window.innerWidth >= 768) return;
+        const top = visual.getBoundingClientRect().top;
+        if (top < 0 || top > window.innerHeight * 0.4) visual.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
 
-        const all = allBalanced(n, k);
-        const total = all.length;
-        const unique = uniqueCount(all, n);
-        let pick = [];
-            if (total > 0) { // Only pick if solutions exist
-        if (modeSel.value === 'elegant') pick = elegantArrangement(all, n);
-        else if (modeSel.value === 'cursed') pick = cursedArrangement(all, n);
-                else if (modeSel.value === 'random') pick = all[Math.floor(Math.random() * total)];
-            }
+      // Shareable links: ?n=24&k=7&mode=cycle (plus &slots=… for layouts that aren't reproducible)
+      function shareParams() {
+        const { n, k } = readInputs();
+        const params = new URLSearchParams({ n, k, mode: modeSel.value });
+        if (current.length && ['random', 'heuristic', 'manual'].includes(modeSel.value)) {
+          params.set('slots', current.map(i => i + 1).sort((a, b) => a - b).join(','));
+        }
+        return String(params).replace(/%2C/g, ','); // commas are safe in a query and easier to read
+      }
+      function shareUrl() {
+        const base = /^https?:$/.test(location.protocol) && location.hostname.endsWith('github.io')
+          ? location.origin + location.pathname : CANONICAL_URL;
+        return `${base}?${shareParams()}`;
+      }
+      function updateUrl() {
+        if (!/^https?:$/.test(location.protocol)) return;
+        try { history.replaceState(null, '', `?${shareParams()}`); } catch (e) { /* e.g. sandboxed frame */ }
+      }
 
-            render(pick, total, unique); // Render final result
+      function loadFromUrl() {
+        let params;
+        try { params = new URLSearchParams(location.search); } catch (e) { return false; }
+        if (!params.has('n')) return false;
+        nInput.value = params.get('n');
+        if (params.has('k')) kInput.value = params.get('k');
+        if (MODE_INFO[params.get('mode')]) modeSel.value = params.get('mode');
+        updateAvailableModes();
+        if (showInputError()) { showIdle(); return true; }
+        const { n, k } = readInputs();
+        const slots = [...new Set((params.get('slots') || '').split(',').map(Number)
+          .filter(s => Number.isInteger(s) && s >= 1 && s <= n).map(s => s - 1))].slice(0, k);
+        if (modeSel.value === 'manual') {
+          manualPos = new Set(slots);
+          manualRender();
+        } else if (['random', 'heuristic'].includes(modeSel.value) && slots.length === k) {
+          render(slots, { extra: '(shared layout)' });
+        } else {
+          run();
+        }
+        return true;
+      }
 
-            // Restore button state
-            runBtn.disabled = false;
-            runBtn.textContent = 'Run';
-        }, 10); // Small delay allows UI to update before heavy calculation
+      async function copyText(text, btn, doneLabel) {
+        let ok = false;
+        try {
+          await navigator.clipboard.writeText(text);
+          ok = true;
+        } catch (e) {
+          // Fallback for browsers or frames without clipboard API access
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.cssText = 'position:fixed;opacity:0';
+          document.body.appendChild(ta);
+          ta.select();
+          try { ok = document.execCommand('copy'); } catch (e2) { ok = false; }
+          ta.remove();
+        }
+        btn.textContent = ok ? doneLabel : 'Copy failed';
+        setTimeout(() => { btn.textContent = btn.dataset.label; }, 1500);
+      }
+
+      copyBtn.addEventListener('click', () => {
+        const { n, k } = readInputs();
+        copyText(`${currentListLabel}: ${slotNames(current)} (${n}-slot rotor, ${k} tubes) – ΣpinZero`, copyBtn, 'Copied!');
       });
+      shareBtn.addEventListener('click', () => copyText(shareUrl(), shareBtn, 'Link copied!'));
+
+      runBtn.addEventListener('click', () => run({ scroll: true }));
 
       clearBtn.addEventListener('click', () => {
+        cancelRun();
         manualPos.clear();
-        render([], 0, 0, false, true);
+        showIdle();
+        updateUrl();
       });
 
-      // Re-draw when the mode changes so Manual mode is clickable right away
+      // Fast modes update as you type; slow ones wait for Run
+      let inputTimer;
+      function onInputsChanged(changed) {
+        cancelRun();
+        updateAvailableModes();
+        const error = showInputError();
+        clearTimeout(inputTimer);
+        inputTimer = setTimeout(() => {
+          const { n, k } = readInputs();
+          if (modeSel.value === 'manual') {
+            if (changed === 'n') manualPos.clear();
+            manualPos = new Set([...manualPos].filter(i => i < n).slice(0, error ? undefined : k));
+            addedPos.clear();
+          }
+          if (error) { drawRotor([], n); resultP.textContent = ''; slotList.hidden = true; mathBox.hidden = true; return; }
+          if (modeSel.value === 'cycle') run();
+          else if (modeSel.value === 'manual') manualRender();
+          else showIdle();
+          updateUrl();
+        }, 150);
+      }
+      nInput.addEventListener('input', () => onInputsChanged('n'));
+      kInput.addEventListener('input', () => onInputsChanged('k'));
+      [nInput, kInput].forEach(input => input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); clearTimeout(inputTimer); run({ scroll: true }); }
+      }));
+
+      presets.addEventListener('click', e => {
+        const chip = e.target.closest('.chip');
+        if (!chip) return;
+        nInput.value = chip.dataset.n;
+        if (+kInput.value > +chip.dataset.n) kInput.value = chip.dataset.n;
+        onInputsChanged('n');
+      });
+
       modeSel.addEventListener('change', () => {
+        cancelRun();
+        updateAvailableModes();
         manualPos.clear();
-        render([], 0, 0, false, true);
+        if (modeSel.value === 'cycle') run();
+        else showIdle();
+        updateUrl();
       });
 
-      // Add event listener to nInput to update available modes when n changes
-      nInput.addEventListener('change', updateAvailableModes);
-      nInput.addEventListener('input', updateAvailableModes);
-
-      // Initial setup
+      // Initial setup: restore a shared link, or show a first answer straight away
       updateAvailableModes();
-      render([], 0, 0, false, true);
+      showInputError();
+      if (!loadFromUrl()) run();
     });
   </script>
 </body>
