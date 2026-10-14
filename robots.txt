@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://yamir-1138.github.io/SpinZero/sitemap.xml

@@ -11,7 +11,10 @@ Enter the number of slots and tubes, choose a mode, and the app visualizes wheth
 
 For **rotors with up to 24 slots**, ΣpinZero **brute-forces all possible configurations** to find truly balanced ones. This might take a few seconds — especially for larger values of `n` and `k`.
 
-For **n > 24**, the app automatically disables computationally intensive modes (Elegant, Cursed, Random) and only allows efficient algorithms to avoid computational explosion.
+For **n > 24**, the app automatically disables computationally intensive modes (Elegant, Cursed, Evil, Random) and only allows efficient algorithms to avoid computational explosion.
+
+Before searching, the app checks whether a balanced arrangement exists at all using the **Lam–Leung theorem**: `k` tubes can be balanced in `n` slots iff both `k` and `n − k` are sums of prime factors of `n`.
+
 ---
 #### Balancing Modes
 
@@ -40,7 +43,8 @@ For **n > 24**, the app automatically disables computationally intensive modes (
   - Finds the most deceptive arrangement possible
   - Delivers the smallest possible non-zero imbalance
   - Creates a configuration that looks balanced but will still wreck your centrifuge
-  - Classic chotic evil alignment
+  - Classic chaotic evil alignment
+  - *Automatically disabled for n > 24 (too computationally intensive)*
   
 - **Random**
   - Selects a random balanced arrangement from all possibilities
@@ -48,17 +52,27 @@ For **n > 24**, the app automatically disables computationally intensive modes (
   - *Automatically disabled for n > 24 (too computationally intensive)*
 
 - **Heuristic Random**
-  - Employs a smart random search with timeout protection
-  - Runs multiple parallel search attempts to find solutions quickly
-  - Perfect balance for reasonable computation time
-  - Falls back to cycle decomposition when possible
+  - Tries pure random sampling first, without freezing the page
+  - Falls back to a randomized cycle decomposition when random hits are too rare (large n)
   - *Available for all n values*
 
 - **Manual Mode**
   - Place tubes yourself and see if your arrangement is balanced in real-time
   - Full vector visualization shows exactly how balanced (or unbalanced) your configuration is
   - Great for educational purposes and hands-on experimentation
+  - Already have some tubes in? Place them and press **Complete it for me** to fill in the rest
+  - Works with the keyboard too (Tab to a slot, Enter to place or remove a tube)
   - *Available for all n values*
+
+---
+
+#### Handy extras
+
+- **Load slots list** – every result shows the slots to load, numbered like the rotor, with a **Copy** button
+- **Imbalance arrow** – an orange arrow shows which way an unbalanced rotor is pulled; a ✓ in the centre means the forces cancel
+- **Share link** – copies a link like `?n=12&k=5&mode=elegant` that opens the same setup (Random and Manual links include the exact slots)
+- **Common rotor sizes** – one-tap buttons for 6, 8, 12, 18, 24, 30 and 36 slots
+- **Live updates** – Cycle Decomposition and Manual redraw as you type; the slower exhaustive modes run in the background without freezing the page
 
 **Try it here:**  
 [https://yamir-1138.github.io/SpinZero/](https://yamir-1138.github.io/SpinZero/)
